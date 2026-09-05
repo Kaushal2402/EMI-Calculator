@@ -1,0 +1,24 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  plugins:
+    - custom_lint
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "lib/generated/**"
+  errors:
+    # Generated-code-adjacent noise we accept project-wide:
+    todo: ignore
+
+linter:
+  rules:
+    # Public API docs are not required for an app (vs. a published package).
+    public_member_api_docs: false
+    lines_longer_than_80_chars: false
+    # pubspec.yaml is grouped by concern to mirror SOW §9, not alphabetised.
+    sort_pub_dependencies: false
+
+custom_lint:
+  rules:
+    - riverpod_lint
