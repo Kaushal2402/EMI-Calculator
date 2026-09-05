@@ -24,6 +24,19 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
   - Add all runtime + dev deps at pinned versions from SOW.
   - `flutter pub get` clean, no version conflicts.
   - DoD: `flutter pub deps` resolves; app still builds.
+  - **APPROVED 2026-09-06:** SOW §9's 2024-era pins do not resolve on the
+    installed toolchain (Flutter 3.44.8 / Dart 3.12.2 / AGP 9 / Gradle 9).
+    Client approved the modern coherent set instead:
+    flutter_riverpod ^3.1.0, riverpod_annotation ^4.0.0, riverpod_generator
+    ^4.0.0, riverpod_lint ^3.1.0, custom_lint ^0.8.1, go_router ^18.0.1,
+    google_fonts ^8.2.1, fl_chart ^1.2.0, google_mobile_ads ^9.1.0,
+    intl ^0.20.2, share_plus ^12.0.2, shared_preferences ^2.5.5,
+    freezed ^3.2.3, freezed_annotation ^3.1.0, json_serializable ^6.11.2,
+    very_good_analysis ^10.3.0, flutter_lints ^6.0.0, build_runner ^2.15.1.
+    Implications for later phases: use `NotifierProvider` (not
+    `StateNotifierProvider`); freezed classes are `abstract class X with _$X`.
+  - **APPROVED 2026-09-06:** `dynamic_color ^2.1.0` added beyond SOW §9 to
+    implement `DynamicColorBuilder` (SOW §6.1).
 
 - [ ] **0.4 Analysis & lint gate**
   - Adopt `very_good_analysis` in `analysis_options.yaml`; wire `custom_lint` + `riverpod_lint`.

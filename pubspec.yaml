@@ -8,14 +8,23 @@ environment:
   sdk: ^3.12.2
 
 # NOTE: SOW §9 pins older package versions (≈2024 era). They do not resolve on the
-# installed toolchain (Flutter 3.44.8 / Dart 3.12.2), which requires analyzer 8.x and
-# therefore newer riverpod / custom_lint / freezed. Versions below are the minimum
-# coherent set that resolves on this SDK. Deviations flagged to the client for sign-off.
+# installed toolchain (Flutter 3.44.8 / Dart 3.12.2 / AGP 9 / Gradle 9), which requires
+# analyzer 8.x and therefore newer riverpod / custom_lint / freezed / google_mobile_ads.
+# Versions below are the minimum coherent set that resolves and builds on this SDK.
+# APPROVED by client 2026-09-06: keep this modern set (Riverpod 3.x -> use
+# NotifierProvider; freezed 3.x -> `abstract class X with _$X`). Do not re-litigate.
 dependencies:
   flutter:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+
+  # Android 12+ dynamic colour, static fallback otherwise (SOW §6.1).
+  # Addition beyond SOW §9 — APPROVED by client 2026-09-06.
+  # Pinned to 1.9.x: dynamic_color 2.x targets the new `material_ui` split and
+  # its `ColorScheme` is not interchangeable with `flutter/material.dart`'s on
+  # Flutter 3.44.8. 1.9.x imports `flutter/material.dart` directly.
+  dynamic_color: ^1.9.0
 
   # State management (SOW §9 pins ^2.5.1; toolchain forces 3.x — same @riverpod codegen API)
   flutter_riverpod: ^3.1.0

@@ -44,7 +44,11 @@ See SOW §8 for the full tree.
 
 - Flutter 3.44.8 / Dart 3.12.2, AGP 9 / Gradle 9.
 - Package versions differ from SOW §9: the pinned 2024-era versions do not
-  resolve on this SDK. `pubspec.yaml` documents each deviation inline. Pending
-  client sign-off.
+  resolve on this SDK. `pubspec.yaml` documents each deviation inline.
+  **Approved by client 2026-09-06** — the modern set stands: Riverpod 3.x
+  (`NotifierProvider`, not `StateNotifierProvider`), freezed 3.x
+  (`abstract class X with _$X`), go_router 18, `google_mobile_ads` 9.x.
+- `dynamic_color` is an approved addition beyond SOW §9 (client 2026-09-06);
+  wired in `app.dart` for Android 12+ dynamic colour with static fallback.
 - Generated code (`*.g.dart`, `*.freezed.dart`) **is** committed — see
   `.gitignore` for the rationale.
