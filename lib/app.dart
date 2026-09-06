@@ -20,12 +20,16 @@ class EmiCalculatorApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Keep two app-lifetime side-effect listeners subscribed:
+    // Keep the app-lifetime side-effect listeners subscribed:
     //  • persist inputs after every successful calculation (task 3.5)
     //  • advance the interstitial calculation counter (task 7.4)
+    //  • build the interstitial controller now so it starts preloading at
+    //    launch (not lazily on the first calculation), giving the first
+    //    every-5th boundary a filled slot.
     ref
       ..watch(calculationPersistenceProvider)
-      ..watch(interstitialCounterProvider);
+      ..watch(interstitialCounterProvider)
+      ..watch(interstitialAdControllerProvider);
 
     // Theme restore is async (SharedPreferences); fall back to system while it
     // resolves on the first frame.

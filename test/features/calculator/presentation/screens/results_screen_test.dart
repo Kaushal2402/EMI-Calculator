@@ -79,6 +79,14 @@ void main() {
     expect(find.byType(SummaryCard), findsOneWidget);
     expect(find.text('BREAKUP'), findsOneWidget);
     expect(find.byType(EmiChart), findsOneWidget);
+
+    // The amortization sliver header is built lazily; on the short test
+    // viewport the taller (hero) summary card pushes it just below the fold,
+    // so scroll it into view before asserting (same pattern as the lazy-rows
+    // test below).
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
+    await tester.pumpAndSettle();
+
     expect(find.text('AMORTIZATION'), findsOneWidget);
     expect(find.byType(AmortizationTable), findsOneWidget);
   });

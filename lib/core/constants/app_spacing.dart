@@ -65,11 +65,18 @@ abstract final class AppSizes {
 
   // Border radii.
 
-  /// CTA button / TextField / SummaryCard radius.
-  static const double radiusMD = 12;
-
   /// OutlinedButton / SegmentedButton / ToggleButton radius.
   static const double radiusSM = 8;
+
+  /// Legacy control radius (kept for callers that pin the old value).
+  static const double radiusMD = 12;
+
+  /// CTA button / TextField / card / hero-tile radius — the app's default
+  /// rounded-surface radius for the refreshed UI.
+  static const double radiusLG = 16;
+
+  /// Large decorative radius (hero panels, bottom sheets).
+  static const double radiusXL = 24;
 }
 
 /// Letter spacing applied to ALL-CAPS labels (`0.08em`, SOW §6.2).

@@ -4,6 +4,7 @@ import 'package:emi_calculator/features/calculator/domain/entities/emi_result.da
 import 'package:emi_calculator/features/calculator/domain/entities/loan_input.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/amortization_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/emi_result_provider.dart';
+import 'package:emi_calculator/features/calculator/presentation/providers/interstitial_ad_controller.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/loan_input_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/utils/emi_share_text.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/admob_banner_widget.dart';
@@ -41,8 +42,16 @@ class ResultsScreen extends ConsumerWidget {
     return AppScaffold(
       title: 'Results',
       leading: BackButton(
-        onPressed: () =>
-            context.canPop() ? context.pop() : context.go(AppRoutes.calculator),
+        // Leaving Results is a natural content boundary — surface the
+        // every-5th-calculation interstitial here too (SOW §4.8). Always
+        // resolves; navigation follows whether or not an ad showed.
+        onPressed: () async {
+          await ref
+              .read(interstitialAdControllerProvider)
+              .maybeShowAtBoundary();
+          if (!context.mounted) return;
+          context.canPop() ? context.pop() : context.go(AppRoutes.calculator);
+        },
       ),
       actions: [
         IconButton(

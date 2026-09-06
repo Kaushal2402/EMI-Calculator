@@ -5,6 +5,7 @@ import 'package:emi_calculator/features/calculator/domain/entities/loan_input.da
 import 'package:emi_calculator/features/calculator/presentation/providers/emi_result_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/loan_input_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/screens/calculator_screen.dart';
+import 'package:emi_calculator/features/calculator/presentation/widgets/admob_banner_widget.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/amount_input_field.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/rate_input_field.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/tenure_input_field.dart';
@@ -102,6 +103,16 @@ void main() {
     expect(find.byType(AmountInputField), findsOneWidget);
     expect(find.byType(RateInputField), findsOneWidget);
     expect(find.byType(TenureInputField), findsOneWidget);
+  });
+
+  testWidgets('mounts the AdMob banner slot on Home (SOW §4.8)', (
+    tester,
+  ) async {
+    await pump(tester);
+    // Ads are disabled in tests, so the slot collapses to zero height — but
+    // the widget must be wired into the Home scaffold so it serves on device.
+    expect(find.byType(AdmobBannerWidget), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('CALCULATE EMI navigates to /results', (tester) async {

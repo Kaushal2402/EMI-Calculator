@@ -45,6 +45,13 @@ class InterstitialAdController {
   InterstitialAd? _ad;
   bool _loading = false;
 
+  /// Back-off retry for a failed preload so a flaky first fill (offline at
+  /// launch, slow SDK init) doesn't leave the slot empty until calc #10.
+  Timer? _retryTimer;
+  int _retryCount = 0;
+  static const int _maxRetries = 5;
+  static const Duration _retryBackoff = Duration(seconds: 20);
+
   int get _count => _prefs.getInt(_kCalcCountKey) ?? 0;
   int get _lastShownCount => _prefs.getInt(_kLastShownKey) ?? 0;
 
@@ -75,10 +82,12 @@ class InterstitialAdController {
     final ad = _ad;
     if (ad == null) {
       // Nothing ready this window — make sure one is loading for next time.
+      _retryCount = 0;
       _preload();
       return;
     }
     _ad = null;
+    _retryCount = 0;
 
     final dismissed = Completer<void>();
     ad.fullScreenContentCallback = FullScreenContentCallback(
@@ -111,21 +120,35 @@ class InterstitialAdController {
           onAdLoaded: (ad) {
             _ad = ad;
             _loading = false;
+            _retryCount = 0;
+            _retryTimer?.cancel();
           },
           onAdFailedToLoad: (error) {
             _ad = null;
             _loading = false;
+            _scheduleRetry();
           },
         ),
       ).catchError((Object _) {
         // No ad SDK (tests) / transient failure — stay adless, retry next window.
         _loading = false;
+        _scheduleRetry();
       }),
     );
   }
 
+  /// Queues another [_preload] after a fixed back-off, up to [_maxRetries]
+  /// times. Reset once a load finally succeeds or an ad is shown.
+  void _scheduleRetry() {
+    if (!enabled || _ad != null || _retryCount >= _maxRetries) return;
+    if (_retryTimer?.isActive ?? false) return;
+    _retryCount++;
+    _retryTimer = Timer(_retryBackoff, _preload);
+  }
+
   /// Disposes any held ad. Call from the provider's `onDispose`.
   void dispose() {
+    _retryTimer?.cancel();
     unawaited(_ad?.dispose());
     _ad = null;
   }

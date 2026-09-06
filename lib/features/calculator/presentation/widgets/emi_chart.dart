@@ -46,7 +46,7 @@ class EmiChart extends StatefulWidget {
 
 class _EmiChartState extends State<EmiChart>
     with SingleTickerProviderStateMixin {
-  static const double _sectionRadius = 26;
+  static const double _sectionRadius = 32;
 
   late final AnimationController _controller;
   late final Animation<double> _sweep;
@@ -211,11 +211,11 @@ class _LegendRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: 14,
+          height: 14,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
         const SizedBox(width: kSpacingSM),

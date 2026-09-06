@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 
 /// Outlined summary card holding the three headline metrics (SOW §4.6 / §5.3).
 ///
-/// Layout per the §5.3 spacing table: outer horizontal margin is the screen
-/// padding (16dp), inner padding `py=20 / px=16`, elevation 0 (outlined), 12dp
-/// radius (all from `cardTheme`), 8dp gap between tiles.
+/// Refreshed layout: the Monthly EMI is the hero — large type on a
+/// `primaryContainer` panel — with Total Interest and Total Payable as two
+/// secondary chips beneath it. Outer card is elevation 0 / 16dp radius / hairline
+/// `outlineVariant` border (from `cardTheme`).
 ///
 /// Takes plain unrounded `EmiResult` figures and applies the display rounding
 /// itself (SOW §4.3): every rupee value is shown to the nearest ₹1 in the
@@ -32,38 +33,79 @@ class SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: kSpacingXL,
-          horizontal: kSpacingLG,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kSpacingMD),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: MetricTile(
-                label: 'Monthly EMI',
-                value: monthlyEmi.toIndianCurrency(),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(AppSizes.radiusMD),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: kSpacingXL,
+                  horizontal: kSpacingLG,
+                ),
+                child: MetricTile(
+                  label: 'Monthly EMI',
+                  value: monthlyEmi.toIndianCurrency(),
+                  emphasis: true,
+                  foreground: scheme.onPrimaryContainer,
+                ),
               ),
             ),
-            const SizedBox(width: kSpacingSM),
-            Expanded(
-              child: MetricTile(
-                label: 'Total Interest',
-                value: totalInterest.toIndianCurrency(),
-              ),
-            ),
-            const SizedBox(width: kSpacingSM),
-            Expanded(
-              child: MetricTile(
-                label: 'Total Payable',
-                value: totalPayable.toIndianCurrency(),
-              ),
+            const SizedBox(height: kSpacingMD),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _SubTile(
+                    label: 'Total Interest',
+                    value: totalInterest.toIndianCurrency(),
+                  ),
+                ),
+                const SizedBox(width: kSpacingMD),
+                Expanded(
+                  child: _SubTile(
+                    label: 'Total Payable',
+                    value: totalPayable.toIndianCurrency(),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A secondary metric on a `surfaceContainerHighest` chip.
+class _SubTile extends StatelessWidget {
+  const _SubTile({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMD),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: kSpacingLG,
+          horizontal: kSpacingMD,
+        ),
+        child: MetricTile(label: label, value: value),
       ),
     );
   }

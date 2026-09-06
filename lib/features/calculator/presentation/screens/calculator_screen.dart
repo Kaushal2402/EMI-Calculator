@@ -7,6 +7,7 @@ import 'package:emi_calculator/features/calculator/presentation/providers/emi_re
 import 'package:emi_calculator/features/calculator/presentation/providers/interstitial_ad_controller.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/loan_input_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/tenure_unit_provider.dart';
+import 'package:emi_calculator/features/calculator/presentation/widgets/admob_banner_widget.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/amount_input_field.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/loan_type_selector.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/rate_input_field.dart';
@@ -41,6 +42,10 @@ class CalculatorScreen extends ConsumerWidget {
           onPressed: () => context.push(AppRoutes.info),
         ),
       ],
+      // Banner pinned above the system nav, same contract as Results
+      // (SOW §4.8 — ads on every screen without degrading the core flow). It
+      // owns the bottom safe-area inset and collapses on a load failure.
+      bottomNavigationBar: const AdmobBannerWidget(),
       body: switch (inputAsync) {
         AsyncData(:final value) => _CalculatorForm(input: value),
         AsyncError(:final error) => ErrorView(message: '$error'),
@@ -64,8 +69,6 @@ class _CalculatorForm extends ConsumerWidget {
     // and disable the CTA only if the engine actually errors.
     final result = ref.watch(emiResultProvider);
     final canCalculate = !result.hasError;
-
-    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
     return SingleChildScrollView(
       child: Column(
@@ -121,7 +124,7 @@ class _CalculatorForm extends ConsumerWidget {
                 : null,
             child: const Text('CALCULATE EMI'),
           ),
-          SizedBox(height: kSpacing24 + bottomInset),
+          const SizedBox(height: kSpacing24),
         ],
       ),
     );
