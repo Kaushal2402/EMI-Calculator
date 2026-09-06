@@ -4,11 +4,21 @@ import 'package:emi_calculator/app.dart';
 import 'package:emi_calculator/core/ads/ads_bootstrap.dart';
 import 'package:emi_calculator/core/providers/persistence_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Portrait-only (SOW §5 shows portrait layouts only; tablet / landscape
+  // layout is out of scope §10). The platform manifests lock this natively too
+  // (AndroidManifest `screenOrientation`, iOS `UISupportedInterfaceOrientations`);
+  // this call is the Flutter-level belt-and-braces.
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   // Resolve SharedPreferences once, up front, so the state layer
   // (loanInputProvider / themeModeProvider) can restore synchronously off a

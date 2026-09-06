@@ -220,8 +220,11 @@ class _LegendRow extends StatelessWidget {
         ),
         const SizedBox(width: kSpacingSM),
         Text(
+          // Label text stays default `onSurface` — the coloured swatch already
+          // carries the segment identity. `secondary` (#E53935) as body text on
+          // `surface` is only 4.05:1, below WCAG AA 4.5:1 (AC-09, Phase 8.3).
           name,
-          style: theme.textTheme.bodyMedium?.copyWith(color: color),
+          style: theme.textTheme.bodyMedium,
         ),
         const Spacer(),
         Text('$percent%', style: valueStyle),
