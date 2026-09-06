@@ -157,12 +157,80 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
 
 ## Phase 3 — State Management (Riverpod)  (SOW §7.2)
 
-- [ ] **3.1 🔒 `loanInputProvider`** (`StateNotifier`) — principal, rate, tenure(months), loanType; async init from repository.
-- [ ] **3.2 `selectedTabProvider`, `tenureUnitProvider`, `themeProvider`** (StateProviders) + theme persistence.
-- [ ] **3.3 `emiResultProvider`** — runs `CalculateEmiUseCase` on input; debounced 150 ms (SOW §4.2).
-- [ ] **3.4 `amortizationProvider`** — derives monthly/yearly schedule + break-even from result.
-- [ ] **3.5 Persistence side-effect** — every successful calculation writes inputs to SharedPreferences.
+- [x] **3.1 🔒 `loanInputProvider`** (`StateNotifier`) — principal, rate, tenure(months), loanType; async init from repository.
+  - **DONE 2026-09-06** (branch `feat/state-management`, commit `39ff3fa`):
+    `AsyncNotifierProvider<LoanInputNotifier, LoanInput>` in
+    `features/calculator/presentation/providers/loan_input_provider.dart`.
+    `build()` awaits `loanRepositoryProvider.getLastInput()` — no null / cold-start
+    branch (repo yields the Home Loan preset, Phase 2.3). Mutators `setLoanType`
+    (AC-05 full reset via `loanInputFromDefaults`), `setPrincipal`, `setAnnualRate`,
+    `setTenureMonths`, `setInput`.
+  - **DECISION — `AsyncNotifier`, not `StateNotifier`:** SOW §7.2 predates Riverpod
+    3; the approved set forbids `StateNotifier`. Repo restore is async, so
+    `AsyncNotifier` (consumers get `AsyncValue<LoanInput>`, `loading` for the first
+    frame only). Riverpod 3 has no `valueOrNull` — used `AsyncValue.value`.
+  - **DEVIATION — hand-written, not `@riverpod` codegen:** codegen derives the
+    provider symbol from the Notifier class name; the only class name yielding the
+    SOW symbol `loanInputProvider` is `LoanInput`, which collides with the domain
+    entity this file imports. Renaming would ripple through the brief + Phases 4/5.
+    The rest of the provider layer is already hand-written `Notifier`s (the exact
+    shape codegen expands to), so this is consistent. No `*.g.dart` for providers;
+    freezed entity codegen is unaffected. `custom_lint`/`riverpod_lint` pass.
+  - **DEVIATION — `core/providers/`:** added `persistence_providers.dart`
+    (`sharedPreferencesProvider` — overridden in `main()`/tests;
+    `loanLocalDataSourceProvider`) as a shared composition root, reused by
+    `themeModeProvider`. `loanRepositoryProvider` lives in the calculator
+    providers dir. `main()` now resolves `SharedPreferences` up front and overrides.
+  - 6 tests (`ProviderContainer.test` + `FakeLoanRepository`, no SharedPreferences).
+- [x] **3.2 `selectedTabProvider`, `tenureUnitProvider`, `themeProvider`** (StateProviders) + theme persistence.
+  - **DONE 2026-09-06** (commit `89f99da`):
+    * `selectedTabProvider` → `NotifierProvider<LoanType>`
+      (`selected_tab_provider.dart`). State is **derived** from
+      `loanInputProvider.loanType` (one source of truth — tab & form can't
+      disagree); `select(type)` delegates to `LoanInputNotifier.setLoanType`, which
+      performs the AC-05 reset. `build()` returns `kDefaultLoanType` until the
+      async input resolves.
+    * `tenureUnitProvider` → `NotifierProvider<TenureUnit>`
+      (`tenure_unit_provider.dart`). Presentation-only Yr/Mo toggle
+      (`select` / `toggle`); input stays in months.
+    * `themeProvider` → `AsyncNotifierProvider<ThemeMode>` — kept the source of
+      truth in `core/theme/theme_provider.dart` (`themeModeProvider`), re-exported
+      by `features/info/presentation/providers/theme_provider.dart`. `build()`
+      restores via `loanLocalDataSourceProvider.readThemeMode()` (key
+      `settings.theme_mode`), default `ThemeMode.system`; `setThemeMode`/`toggle`
+      write straight back (no domain theme repo — Phase 2.1). `app.dart` reads
+      `.value ?? ThemeMode.system`.
+  - **DECISION:** all three are `NotifierProvider`/`AsyncNotifierProvider`, not
+    `StateProvider` (SOW §7.2 wording predates the approved Riverpod 3 set).
+  - 12 tests (selectedTab 4, tenureUnit 3, theme 5).
+- [x] **3.3 `emiResultProvider`** — runs `CalculateEmiUseCase` on input; debounced 150 ms (SOW §4.2).
+  - **DONE 2026-09-06** (commit `ff14ac9`): `FutureProvider<EmiResult>` awaiting
+    `loanInputProvider.future`, then waiting `calcDebounceProvider`
+    (default `kCalcDebounce` = 150 ms) before running the use case. On each input
+    change Riverpod disposes the prior run; an `onDispose` flag makes the
+    superseded run return a never-completing future so its result is discarded —
+    rapid edits collapse to one calculation. `calcDebounceProvider` is overridable
+    (`Duration.zero` in most tests; small non-zero to assert coalescing).
+    Pure derivation — no persistence. 4 tests incl. a call-counting spy use case.
+- [x] **3.4 `amortizationProvider`** — derives monthly/yearly schedule + break-even from result.
+  - **DONE 2026-09-06** (commit `4b511b8`): `FutureProvider<AmortizationView>`
+    derived from `emiResultProvider` (pure, inherits its debounce).
+    `AmortizationView` = monthly schedule + yearly aggregation
+    (`AggregateYearlyScheduleUseCase`) + monthly & yearly break-even indices
+    (`FindBreakEvenRowUseCase` crossover, per 1.4). Home default break-even
+    142 / 12. 5 tests (incl. partial trailing year, zero-interest → index 0).
+- [x] **3.5 Persistence side-effect** — every successful calculation writes inputs to SharedPreferences.
+  - **DONE 2026-09-06** (commit `b151da8`): `calculationPersistenceProvider`
+    (`Provider<void>`) `ref.listen`s `emiResultProvider` and, on each new
+    `AsyncData<EmiResult>` (identical re-emissions ignored), fires
+    `loanRepository.saveLastInput(currentInput)` from the listener callback —
+    **not** in a getter; `emiResultProvider` stays pure. `app.dart` `watch`es it
+    for the app lifetime. One settled calc ⇒ exactly one save (rapid edits already
+    coalesced upstream). 4 tests.
   - DoD (phase): provider unit tests with `ProviderContainer`; tab switch resets to that type's defaults (AC-05).
+  - **PHASE 3 DONE 2026-09-06** — 31 new provider tests, `flutter test` 130 green,
+    `flutter analyze` 0/0, `dart format` clean, `dart run custom_lint` clean.
+    Branch `feat/state-management` (not merged, not pushed).
 
 ---
 
