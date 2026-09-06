@@ -262,7 +262,8 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
     `minLabel '₹10K'` / `maxLabel '₹5Cr'`.
   - **DECISION — principal slider snaps to ₹1,000.** SOW §4.2 specifies a step only for
     the rate; a continuous 10k–5Cr track is unusable. Drags snap to ₹1,000; the text
-    field still accepts any exact rupee value in range. Flagged for client review.
+    field still accepts any exact rupee value in range. **CONFIRMED 2026-09-06 (client):**
+    keep the ₹1,000 slider snap.
 - [x] **4.4 `RateInputField`** — TextField + Slider; 1.00–36.00%, step 0.05%; `XX.XX%` format.
   - **DONE 2026-09-06**: same dumb-widget pattern. `suffixText: ' %'`, text shown as
     `toStringAsFixed(2)`, `FilteringTextInputFormatter.allow('[0-9.]')`. Slider
@@ -300,8 +301,13 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
     table wins per the phase brief. "first: 0dp" is read as "no extra margin beyond the
     inter-group gap"; the selector is treated as a group peer, so the standard 20dp
     applies between it and the Principal group. A literal 0dp there is visually cramped.
-    Needs client confirmation.
+    **CONFIRMED 2026-09-06 (client):** table wins — keep 20dp.
+- **CONFIRMED 2026-09-06 (client):** providers stay hand-written `Notifier`s (not
+  `@riverpod` codegen) — the accepted deviation from Phase 3 is now a settled decision.
 - **PHASE 4 DONE 2026-09-06** — branch `feat/calculator-screen` (not merged, not pushed).
+  `flutter analyze` 0/0 · `dart format` clean · `dart run custom_lint` clean ·
+  `flutter test` 160 green (+30 over Phase 3). Light/dark + 1.3× text-scale regression-
+  tested in `calculator_screen_test.dart`.
   `flutter analyze` 0/0, `dart format` clean, `dart run custom_lint` clean,
   `flutter test` **160 green** (+28 vs Phase 3's 130; +2 pre-existing `widget_test.dart`
   updated to override `sharedPreferencesProvider` now that splash lands on a live
