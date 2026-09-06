@@ -22,6 +22,12 @@ String buildEmiShareText({
   required LoanInput input,
   required EmiResult result,
 }) {
+  // SETTLED DECISION (client-accepted 2026-09-06, see TASKS.md 6.3): the totals
+  // here are derived from the ROUNDED EMI (`roundedEmi × n`, then `− P`) so the
+  // output reproduces the SOW §4.7 template exactly. This deliberately differs
+  // by ~₹30 from the Results SummaryCard, which rounds each unrounded EmiResult
+  // value independently. Do NOT "fix" this to use result.totalPayable /
+  // result.totalInterest — it would break the §4.7 byte-for-byte match.
   final roundedEmi = result.monthlyEmi.round();
   final totalPayable = (roundedEmi * input.tenureMonths).toDouble();
   final totalInterest = totalPayable - input.principal;

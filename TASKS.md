@@ -502,11 +502,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
     share text uses `roundedEmi = result.monthlyEmi.round()`, then
     `Total Payable = roundedEmi × n`, `Total Interest = Total Payable − P`. The
     unrounded `EmiResult` totals would give `₹62,48,368`-ish.
-  - **FLAG for client:** this makes the **share text** totals differ by ~₹30 from the
-    **SummaryCard** on the Results screen, which rounds each unrounded `EmiResult`
-    value independently (Phase 5.1). Recommend a follow-up aligning the SummaryCard
-    to the SOW §4.3 "EMI × n − P" (rounded-EMI) definition so both surfaces agree.
-    Not changed here — out of Phase 6 scope.
+  - **CONFIRMED 2026-09-06 (client): leave both as-is — settled.** The share text
+    keeps `roundedEmi × n` (reproduces §4.7 exactly); the Results `SummaryCard` keeps
+    independent per-value rounding of the unrounded `EmiResult`. The resulting ~₹30
+    cross-surface difference is **intentional and accepted**, not a bug. A `//`
+    comment at the rounding site in `emi_share_text.dart` points here so it is not
+    "fixed" later. No code change.
   - 7 tests (`emi_share_text_test.dart`): byte-for-byte template match for the Home
     Loan default, colon alignment, Car/Personal labels + figures, rounded-EMI totals,
     fractional-year tenure. Plus 1 widget test in `results_screen_test.dart` that
@@ -515,15 +516,23 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
   - **DEFERRED:** AC-06 final check = manual share on real iOS + Android (native sheet
     can't run in a widget test) — Phase 8 device pass.
 
-**PHASE 6 DONE 2026-09-06** — branch `feat/info-share-splash` (not merged, not pushed).
+**PHASE 6 DONE 2026-09-06** — branch `feat/info-share-splash`, merged to `develop`
+via `--no-ff` in `<merge>` (not pushed — `develop` stays ahead of `origin/develop`).
+Branch deleted post-merge (Phase 1–5 pattern).
 `flutter analyze` 0/0 · `dart format` clean · `dart run custom_lint` clean ·
 `flutter test` **198 green** (+15 vs Phase 5's 183). New tests:
 `emi_share_text_test` (7), `splash_screen_test` (3), `info_bottom_sheet_test` (5).
 New deviation from SOW §8 tree: `features/calculator/presentation/utils/` for
-`emi_share_text.dart` (standard presentation-helper location). Interim
-`core/constants/app_info.dart` for the app version — **`package_info_plus` addition
-pending client approval** (see 6.1). Unblocks **Phase 7 — AdMob** (`AdmobBannerWidget`
-on Results, interstitial-every-5th-calc).
+`emi_share_text.dart` (standard presentation-helper location).
+**CONFIRMED 2026-09-06 (client):**
+* App version — **keep the `kAppVersion = '1.0.0'` const** in
+  `core/constants/app_info.dart`; do **not** add `package_info_plus`. Version
+  handling is formalised in Phase 9.3. (Bundle-id / applicationId is **not** touched
+  in this branch — see the report's bundle-id discrepancy note.)
+* Share-text vs SummaryCard rounding — **left as-is, settled.** Share uses
+  `roundedEmi × n` (byte-for-byte §4.7); SummaryCard rounds each unrounded value
+  independently. The ~₹30 cross-surface difference is intentional.
+Unblocks **Phase 7 — AdMob** (`AdmobBannerWidget` on Results, interstitial-every-5th-calc).
 
 ---
 
