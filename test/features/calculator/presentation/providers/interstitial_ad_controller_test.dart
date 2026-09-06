@@ -68,4 +68,11 @@ void main() {
     final c = await makeController(prefs: {'ads.calc_count': 7});
     expect(c.isDueAtBoundary, isTrue);
   });
+
+  test('showOnCtaTap is a safe no-op when ads are disabled and always '
+      'resolves', () async {
+    final c = await makeController();
+    await c.showOnCtaTap(); // must not throw / hang
+    await c.showOnCtaTap(); // repeated taps are fine too
+  });
 }

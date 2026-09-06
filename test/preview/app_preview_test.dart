@@ -7,6 +7,7 @@ import 'package:emi_calculator/core/theme/app_theme.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/emi_result_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/screens/calculator_screen.dart';
 import 'package:emi_calculator/features/calculator/presentation/screens/results_screen.dart';
+import 'package:emi_calculator/features/splash/presentation/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,6 +37,7 @@ void main() {
     required Widget screen,
     required ProviderContainer c,
     Brightness brightness = Brightness.light,
+    bool settle = true,
   }) async {
     tester.view.physicalSize = const Size(1170, 2532); // iPhone 13/14 @3x
     tester.view.devicePixelRatio = 3;
@@ -43,20 +45,25 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: c,
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
-          themeMode: brightness == Brightness.dark
-              ? ThemeMode.dark
-              : ThemeMode.light,
-          home: screen,
-        ),
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: brightness == Brightness.dark
+            ? ThemeMode.dark
+            : ThemeMode.light,
+        home: UncontrolledProviderScope(container: c, child: screen),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      // Screens with an indefinite animation (splash progress bar) never
+      // settle — pump enough for the icon asset to decode, then snapshot.
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
     expect(tester.takeException(), isNull);
 
     // Pixel comparison only runs when explicitly regenerating
@@ -70,7 +77,20 @@ void main() {
         matchesGoldenFile('goldens/$name.png'),
       );
     }
+    // For `settle: false` screens (splash) we deliberately stop before the
+    // 1.5s navigation timer fires; `SplashScreen.dispose` cancels it at
+    // teardown, so nothing leaks.
   }
+
+  testWidgets('splash — light', (tester) async {
+    await shoot(
+      tester,
+      name: 'splash_light',
+      screen: const SplashScreen(),
+      c: await container(),
+      settle: false,
+    );
+  });
 
   testWidgets('calculator — light', (tester) async {
     await shoot(

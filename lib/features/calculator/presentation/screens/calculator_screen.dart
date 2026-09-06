@@ -86,11 +86,13 @@ class _BottomBar extends ConsumerWidget {
             icon: Icons.calculate_outlined,
             onPressed: canCalculate
                 ? () async {
-                    // Every-5th-calculation interstitial boundary (SOW §4.8,
-                    // task 7.4). Always resolves; navigation follows regardless.
+                    // Client request (2026-09-06): interstitial on every
+                    // CALCULATE EMI tap (rapid re-taps coalesced by a 15s
+                    // guard, see kMinGapBetweenInterstitials). Always resolves;
+                    // navigation follows whether or not an ad showed.
                     await ref
                         .read(interstitialAdControllerProvider)
-                        .maybeShowAtBoundary();
+                        .showOnCtaTap();
                     if (context.mounted) {
                       unawaited(context.push(AppRoutes.results));
                     }

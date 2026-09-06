@@ -50,6 +50,18 @@ class ModalBottomSheetPage<T> extends Page<T> {
   }
 }
 
+/// A [Page] that cross-fades instead of the platform push/slide — used for the
+/// splash → calculator hand-off so there is no half-and-half slide.
+CustomTransitionPage<void> _fadePage(Widget child, GoRouterState state) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 280),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        FadeTransition(opacity: animation, child: child),
+  );
+}
+
 /// The app's [GoRouter] instance (SOW §7.3).
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
@@ -57,12 +69,13 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.splash,
       name: 'splash',
-      builder: (context, state) => const SplashScreen(),
+      pageBuilder: (context, state) => _fadePage(const SplashScreen(), state),
     ),
     GoRoute(
       path: AppRoutes.calculator,
       name: 'calculator',
-      builder: (context, state) => const CalculatorScreen(),
+      pageBuilder: (context, state) =>
+          _fadePage(const CalculatorScreen(), state),
     ),
     GoRoute(
       path: AppRoutes.results,

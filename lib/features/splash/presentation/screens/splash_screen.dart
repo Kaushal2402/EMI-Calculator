@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:emi_calculator/core/constants/app_colors.dart';
 import 'package:emi_calculator/core/constants/app_info.dart';
 import 'package:emi_calculator/core/constants/app_spacing.dart';
 import 'package:emi_calculator/core/router/app_router.dart';
@@ -8,16 +9,18 @@ import 'package:go_router/go_router.dart';
 
 /// Splash screen (SOW §5.1).
 ///
-/// App icon (80×80dp, centred), the "EMI Calculator" headline, a muted
-/// "by Softpital" by-line and a 2dp [LinearProgressIndicator], over a vertical
-/// gradient derived from the primary colour. After 1.5s it auto-navigates to
-/// `/calculator`.
+/// The app icon on a rounded card, the "EMI Calculator" wordmark, a muted
+/// "by Softpital" by-line and a slim progress bar, over the brand
+/// primary → deep-blue gradient. After 1.5s it auto-navigates to `/calculator`.
 class SplashScreen extends StatefulWidget {
   /// Creates the splash screen.
   const SplashScreen({super.key});
 
   /// How long the splash is shown before navigating on (SOW §5.1).
   static const Duration displayDuration = Duration(milliseconds: 1500);
+
+  /// Side of the icon card.
+  static const double iconSize = 104;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -42,50 +45,72 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // SOW §5.1 calls for a "Primary 600 → Primary 800" gradient. The §6.1
-    // palette only defines a single `primary` token (no discrete 600/800
-    // steps), so both stops are derived from it: a lighter tint for the top
-    // (≈600) and a darker shade for the bottom (≈800).
-    final gradientTop = Color.lerp(scheme.primary, Colors.white, 0.12)!;
-    final gradientBottom = Color.lerp(scheme.primary, Colors.black, 0.24)!;
-
     return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [gradientTop, gradientBottom],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppColors.brandGradient,
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              const Spacer(),
-              Icon(Icons.calculate, size: 80, color: scheme.onPrimary),
-              const SizedBox(height: kSpacingLG),
+              const Spacer(flex: 3),
+              Container(
+                width: SplashScreen.iconSize,
+                height: SplashScreen.iconSize,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.28),
+                      blurRadius: 28,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                  child: Image.asset(
+                    'assets/icon/app_icon.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: kSpacing24),
               Text(
                 'EMI Calculator',
                 style: textTheme.headlineMedium?.copyWith(
-                  color: scheme.onPrimary,
-                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: kSpacingXS),
               Text(
                 'by $kAppAuthor',
                 style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onPrimary.withValues(alpha: 0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
-              const Spacer(),
-              const SizedBox(
-                height: 2,
-                child: LinearProgressIndicator(),
+              const Spacer(flex: 3),
+              SizedBox(
+                width: 140,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(kSpacingXS),
+                  child: LinearProgressIndicator(
+                    minHeight: 3,
+                    backgroundColor: Colors.white.withValues(alpha: 0.24),
+                    valueColor: const AlwaysStoppedAnimation(Colors.white),
+                  ),
+                ),
               ),
+              const SizedBox(height: kSpacing40),
             ],
           ),
         ),

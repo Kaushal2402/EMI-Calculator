@@ -24,7 +24,7 @@ void main() {
     );
   }
 
-  testWidgets('shows the app name, by-line, 80dp icon and 2dp progress bar', (
+  testWidgets('shows the app name, by-line, icon art and progress bar', (
     tester,
   ) async {
     await pumpSplash(tester);
@@ -32,16 +32,26 @@ void main() {
     expect(find.text('EMI Calculator'), findsOneWidget);
     expect(find.text('by Softpital'), findsOneWidget);
 
-    final icon = tester.widget<Icon>(find.byIcon(Icons.calculate));
-    expect(icon.size, 80);
-
-    final bar = tester.widget<SizedBox>(
-      find.ancestor(
-        of: find.byType(LinearProgressIndicator),
-        matching: find.byType(SizedBox),
-      ),
+    // App icon art on its rounded card.
+    expect(
+      find.image(const AssetImage('assets/icon/app_icon.png')),
+      findsOneWidget,
     );
-    expect(bar.height, 2);
+    final iconBox = tester.widget<Container>(
+      find
+          .ancestor(
+            of: find.image(const AssetImage('assets/icon/app_icon.png')),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(iconBox.constraints?.maxWidth, SplashScreen.iconSize);
+
+    // Slim progress bar.
+    final bar = tester.widget<LinearProgressIndicator>(
+      find.byType(LinearProgressIndicator),
+    );
+    expect(bar.minHeight, 3);
 
     // Drain the pending navigation timer.
     await tester.pump(SplashScreen.displayDuration);

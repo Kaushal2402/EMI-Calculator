@@ -843,14 +843,29 @@ into the Phase 8 device pass.
   with a 2 dp focus ring.
 - [x] **Results screen** — Monthly EMI hero on the brand gradient (white, big),
   Total Interest / Total Payable as chips tagged with the donut colours.
+- [x] **Loan-type tabs** — `LoanTypeSelector` rebuilt from the M3
+  `SegmentedButton` into a custom segmented-pill control (grey track, raised
+  white active pill in `primary`, 180 ms slide, 44 dp targets).
+- [x] **Splash screen** — full-bleed brand gradient (was clipping to content
+  width — a shrink-wrapped `Column`; now a `double.infinity` container), the
+  client icon art on a shadowed rounded card, Poppins wordmark, slim white
+  progress bar. Splash → Calculator now cross-fades (`_fadePage` in
+  `app_router.dart`) instead of the half-and-half platform slide.
+- [x] **Interstitial on every CALCULATE EMI tap** (client, 2026-09-06) —
+  new `InterstitialAdController.showOnCtaTap()`; the CTA calls it instead of
+  the every-5th boundary. A `kMinGapBetweenInterstitials` (15 s) guard
+  coalesces rapid re-taps so back-to-back full-screens don't trip AdMob
+  policy. Results→back still uses `maybeShowAtBoundary` (every-5th).
+  ⚠️ An ad on *every* primary action is aggressive vs AdMob's frequency
+  guidance — flagged to the client; fill rate + the 15 s guard soften it.
 - [x] **New shared widget** `lib/shared/widgets/gradient_button.dart`.
 - [x] **Design-review previews** — `test/preview/app_preview_test.dart` renders
-  each screen full-bleed in both themes; PNGs regenerate with
+  splash + both screens full-bleed in both themes; PNGs regenerate with
   `flutter test --update-goldens test/preview` but the pixel match is not a CI
   gate (`autoUpdateGoldenFiles` guard) — the pump still catches overflow.
-- Regenerated: every widget golden (palette + component theming), plus the
-  4 preview goldens. `flutter analyze` 0/0, `custom_lint` clean, 250 pass / 4
-  skip (the 4 = P1-01 outline guards).
+- Regenerated: every widget golden (palette + component theming) + preview
+  goldens. `flutter analyze` 0/0, `custom_lint` clean, 252 pass / 4 skip
+  (the 4 = P1-01 outline guards).
 - [ ] **9.2 Splash native config** — `flutter_native_splash` for both platforms matching in-app splash.
 - [ ] **9.3 Versioning** — set `version: 1.0.0+1`; document bump policy.
 - [ ] **9.4 Android release build (D-02)** — create upload keystore, configure signing (not in VCS), `flutter build apk --release` + `--split-per-abi`, and `appbundle`.

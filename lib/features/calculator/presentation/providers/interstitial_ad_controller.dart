@@ -1,11 +1,14 @@
-/// Interstitial ad — "boundary" model (SOW §4.8, client-approved 2026-09-06).
+/// Interstitial ad controller (SOW §4.8).
 ///
-/// The persisted counter advances on **every settled recalculation**
-/// ([interstitialCounterProvider], same signal as
-/// `calculationPersistenceProvider`). The full-screen ad is only ever
-/// *presented* from [InterstitialAdController.maybeShowAtBoundary], which the
-/// CALCULATE EMI button calls just before navigating to Results — so it never
-/// interrupts slider editing (AdMob policy) and never shows on first use.
+/// Two triggers, both only ever presenting between screens (never during slider
+/// editing, per AdMob policy):
+///  * [InterstitialAdController.showOnCtaTap] — the CALCULATE EMI button. Client
+///    asked (2026-09-06) for an ad on *every* tap; a
+///    [kMinGapBetweenInterstitials] guard coalesces rapid re-taps so the
+///    account isn't flagged for stacking full-screen ads.
+///  * [InterstitialAdController.maybeShowAtBoundary] — the Results → back
+///    button, gated to every [kInterstitialEveryNCalculations]th settled
+///    recalculation ([interstitialCounterProvider]).
 library;
 
 import 'dart:async';
@@ -25,8 +28,19 @@ const String _kCalcCountKey = 'ads.calc_count';
 /// Value of [_kCalcCountKey] the last time an interstitial was shown.
 const String _kLastShownKey = 'ads.calc_count_at_last_interstitial';
 
-/// Show an interstitial once per this many settled calculations (SOW §4.8).
+/// Epoch-ms of the last interstitial actually presented (any trigger).
+const String _kLastShownAtMsKey = 'ads.interstitial_last_shown_ms';
+
+/// Show an interstitial once per this many settled calculations (SOW §4.8) —
+/// used by the Results-back boundary.
 const int kInterstitialEveryNCalculations = 5;
+
+/// Minimum gap between two interstitials, whatever the trigger. The CALCULATE
+/// EMI CTA is wired to show on *every* tap (client request, 2026-09-06); this
+/// guard stops rapid re-taps from stacking full-screen ads back-to-back, which
+/// AdMob treats as a policy violation. It is invisible in the real flow (a user
+/// cannot calculate → read Results → return → recalculate this fast).
+const Duration kMinGapBetweenInterstitials = Duration(seconds: 15);
 
 /// Owns the interstitial ad instance, the persisted calculation counter and the
 /// "is one due?" decision.
@@ -78,14 +92,41 @@ class InterstitialAdController {
   /// showed an ad, wasn't due, or had nothing loaded in time.
   Future<void> maybeShowAtBoundary() async {
     if (!enabled || !isDueAtBoundary) return;
-
-    final ad = _ad;
-    if (ad == null) {
-      // Nothing ready this window — make sure one is loading for next time.
+    if (_ad == null) {
       _retryCount = 0;
       _preload();
       return;
     }
+    await _present(recordBoundary: true);
+  }
+
+  /// Client request (2026-09-06): present an interstitial on **every** CALCULATE
+  /// EMI tap. Still only fires when [enabled], an ad is already loaded, and at
+  /// least [kMinGapBetweenInterstitials] has passed since the previous one
+  /// (rapid re-taps are coalesced — see the constant's note on AdMob policy).
+  /// Always resolves; navigation should follow regardless.
+  Future<void> showOnCtaTap() async {
+    if (!enabled) return;
+
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final lastMs = _prefs.getInt(_kLastShownAtMsKey) ?? 0;
+    if (nowMs - lastMs < kMinGapBetweenInterstitials.inMilliseconds) {
+      _preload();
+      return;
+    }
+    if (_ad == null) {
+      _retryCount = 0;
+      _preload();
+      return;
+    }
+    await _present(recordBoundary: false);
+  }
+
+  /// Presents the held ad and waits for dismissal. Records the show markers
+  /// *before* `show()` so a crash mid-ad can't loop it.
+  Future<void> _present({required bool recordBoundary}) async {
+    final ad = _ad;
+    if (ad == null) return;
     _ad = null;
     _retryCount = 0;
 
@@ -103,8 +144,11 @@ class InterstitialAdController {
       },
     );
 
-    // Record the show *before* presenting so a crash mid-ad can't loop it.
-    await _prefs.setInt(_kLastShownKey, _count);
+    if (recordBoundary) await _prefs.setInt(_kLastShownKey, _count);
+    await _prefs.setInt(
+      _kLastShownAtMsKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
     await ad.show();
     await dismissed.future;
   }
