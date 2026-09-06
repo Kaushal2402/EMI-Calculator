@@ -6,6 +6,7 @@ import 'package:emi_calculator/features/calculator/presentation/providers/amorti
 import 'package:emi_calculator/features/calculator/presentation/providers/emi_result_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/loan_input_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/utils/emi_share_text.dart';
+import 'package:emi_calculator/features/calculator/presentation/widgets/admob_banner_widget.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/amortization_table.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/emi_chart.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/summary_card.dart';
@@ -52,6 +53,10 @@ class ResultsScreen extends ConsumerWidget {
               : null,
         ),
       ],
+      // Banner pinned above the system nav, always on the results view
+      // (SOW §4.8). It owns the bottom safe-area inset and collapses on a
+      // load failure (offline) so no empty strip is left behind.
+      bottomNavigationBar: const AdmobBannerWidget(),
       body: switch (resultAsync) {
         AsyncData(:final value) => _ResultsBody(result: value),
         AsyncError(:final error) => ErrorView(message: '$error'),
@@ -84,7 +89,6 @@ class _ResultsBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewAsync = ref.watch(amortizationProvider);
-    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     final principal = result.totalPayable - result.totalInterest;
 
     return CustomScrollView(
@@ -124,8 +128,8 @@ class _ResultsBody extends ConsumerWidget {
             ),
           ),
         },
-        SliverToBoxAdapter(
-          child: SizedBox(height: kSpacing24 + bottomInset),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: kSpacing24),
         ),
       ],
     );

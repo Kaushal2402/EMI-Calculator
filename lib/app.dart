@@ -4,6 +4,7 @@ import 'package:emi_calculator/core/router/app_router.dart';
 import 'package:emi_calculator/core/theme/app_theme.dart';
 import 'package:emi_calculator/core/theme/theme_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/calculation_persistence_provider.dart';
+import 'package:emi_calculator/features/calculator/presentation/providers/interstitial_ad_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,9 +20,12 @@ class EmiCalculatorApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Keep the "persist inputs after every successful calculation" listener
-    // (task 3.5) subscribed for the app's lifetime.
-    ref.watch(calculationPersistenceProvider);
+    // Keep two app-lifetime side-effect listeners subscribed:
+    //  • persist inputs after every successful calculation (task 3.5)
+    //  • advance the interstitial calculation counter (task 7.4)
+    ref
+      ..watch(calculationPersistenceProvider)
+      ..watch(interstitialCounterProvider);
 
     // Theme restore is async (SharedPreferences); fall back to system while it
     // resolves on the first frame.

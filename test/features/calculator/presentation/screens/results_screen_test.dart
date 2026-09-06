@@ -1,3 +1,4 @@
+import 'package:emi_calculator/core/ads/ads_providers.dart';
 import 'package:emi_calculator/core/providers/persistence_providers.dart';
 import 'package:emi_calculator/core/theme/app_theme.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/emi_result_provider.dart';
@@ -21,6 +22,8 @@ void main() {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         calcDebounceProvider.overrideWithValue(Duration.zero),
+        // Keep the live AdMob banner out of widget tests — no platform channel.
+        adsEnabledProvider.overrideWithValue(false),
       ],
     );
     addTearDown(container.dispose);

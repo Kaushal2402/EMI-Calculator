@@ -545,12 +545,156 @@ Unblocks **Phase 7 — AdMob** (`AdmobBannerWidget` on Results, interstitial-eve
 
 ## Phase 7 — AdMob Integration  (SOW §4.8 · Timeline Day 3 AM)
 
-- [ ] **7.1 🔒 `google_mobile_ads` setup** — iOS `Info.plist` `GADApplicationIdentifier` + SKAdNetwork ids; Android `AndroidManifest` APPLICATION_ID; ATT prompt on iOS.
-- [ ] **7.2 `.env` for ad unit IDs** (D-07) — `flutter_dotenv` or `--dart-define`; test IDs default, prod IDs gated by build flavor; `.env` git-ignored, `.env.example` committed.
-- [ ] **7.3 `AdmobBannerWidget`** — 320×50 pinned above system nav on Results; reserves space, never overlaps content (AC-07).
-- [ ] **7.4 Interstitial** — counter in persistent storage; show on every 5th calculation, never on first use; preload next.
-- [ ] **7.5 Failure handling** — ad load failure = collapse gracefully, no layout shift, no crash offline.
-  - DoD (phase): manual on 3 screen sizes; airplane-mode test; consent/ATT flow verified.
+**CLIENT DECISIONS 2026-09-06 (Phase 7 kickoff):**
+* Ad unit IDs loaded via **`--dart-define-from-file=.env`** (no new runtime dep) —
+  not `flutter_dotenv`. Native *app* ID injected separately (Gradle reads `.env`;
+  iOS xcconfig).
+* **iOS ATT** — approved adding `app_tracking_transparency ^2.0.7` (latest; not
+  `^5.x`). Addition beyond SOW §9 (precedent: `dynamic_color`).
+* **Interstitial counter** — client chose "every settled recalculation". **OPEN /
+  flagged back to client:** firing a full-screen ad mid-slider-drag violates AdMob
+  policy ("interstitial without warning while the user interacts"). Proposed
+  compromise: counter still increments per settled recalc, but the interstitial is
+  only *presented* at a natural boundary (next CALCULATE EMI tap / Results entry),
+  never on first use. **Awaiting confirmation before building 7.4.**
+* Production AdMob IDs — **RECEIVED from client 2026-09-06** (publisher
+  `pub-6537371585934021`). Written to git-ignored `.env`:
+  - Android app `…~4107919860`, banner `…/6948388978`, interstitial `…/4978148400`
+  - iOS app `…~9820140496`, banner `…/3254732140`, interstitial `…/8889473254`
+  `.env.example` keeps Google **test** IDs as the committed template. Release
+  builds pass `--dart-define-from-file=.env`; `debug` builds use test IDs
+  (Android Gradle gates the native app ID per build type; iOS Debug.xcconfig
+  keeps the test app ID, Release.xcconfig carries the prod one).
+* Pending confirm (defaults assumed): UMP consent request wired now (ships in
+  `google_mobile_ads`, no dep); `minSdk` pinned to 24; banner = fixed footer on
+  Results; branch `feat/admob-integration` off `develop`, `--no-ff`, not pushed.
+
+- [x] **7.1 🔒 `google_mobile_ads` setup** — iOS `Info.plist` `GADApplicationIdentifier` + SKAdNetwork ids; Android `AndroidManifest` APPLICATION_ID; ATT prompt on iOS.
+  - **DONE 2026-09-06** (branch `feat/admob-integration`):
+    * `pubspec.yaml` — added `app_tracking_transparency: ^2.0.7` (client-approved,
+      beyond SOW §9). `google_mobile_ads: ^9.1.0` was already present from Phase 0.
+    * **Android** `AndroidManifest.xml` — added `<uses-permission INTERNET>`, the
+      `com.google.android.gms.ads.APPLICATION_ID` `<meta-data>` (value =
+      `${admobAppId}` placeholder), plus `OPTIMIZE_INITIALIZATION` /
+      `OPTIMIZE_AD_LOADING` flags so the SDK defers heavy init to our own
+      `bootstrapAds()` (protects AC-02). `app/build.gradle.kts` — pinned
+      `minSdk = 24` (was `flutter.minSdkVersion` = 21; SOW AC-10 + GMA 9.x needs
+      23+); parses project-root `.env` for `ADMOB_APP_ID_ANDROID` → sets
+      `manifestPlaceholders["admobAppId"]` **per build type** — `debug` always
+      uses Google's test app ID, `release` uses the `.env` value (prod), with a
+      test-ID fallback when `.env` is absent (CI).
+    * **iOS** `Info.plist` — `GADApplicationIdentifier = $(ADMOB_APP_ID_IOS)`,
+      `NSUserTrackingUsageDescription`, and the full Google `SKAdNetworkItems`
+      list (43 IDs). `ios/Flutter/Debug.xcconfig` = test app ID,
+      `Release.xcconfig` = **prod** app ID (`…~9820140496`).
+    * `lib/core/ads/ads_bootstrap.dart` — `bootstrapAds()`: iOS ATT request
+      (only when `notDetermined`) → `MobileAds.instance.initialize()`; wrapped in
+      `try/on Object catch` so a flaky SDK can never break launch; `_started`
+      one-shot guard + `resetAdsBootstrapForTest()`. Called **fire-and-forget**
+      (`unawaited`) from `main()` so the cold-start budget (AC-02) doesn't pay
+      for ad init.
+    * **VERIFIED:** `flutter build apk --debug` → merged manifest `APPLICATION_ID`
+      = **test** app ID; `flutter build apk --release --dart-define-from-file=.env`
+      → merged manifest `APPLICATION_ID` = **prod** `…~4107919860` (build-type
+      gating confirmed). Single `INTERNET` permission. `flutter analyze` 0/0,
+      `flutter test` 200 green. **iOS build not run here** (toolchain/pods) —
+      deferred to the Phase 8 device pass, same as prior phases' on-device checks.
+- [x] **7.2 `.env` for ad unit IDs** (D-07) — `flutter_dotenv` or `--dart-define`; test IDs default, prod IDs gated by build flavor; `.env` git-ignored, `.env.example` committed.
+  - **DONE 2026-09-06**: `lib/core/config/ad_config.dart` — `AdConfig` resolves
+    `bannerUnitId` / `interstitialUnitId` per `defaultTargetPlatform`.
+  - **HARD MODE GATE (client, 2026-09-06): debug → test, release → prod.**
+    `AdConfig` branches on `kReleaseMode`: any debug/profile build returns the
+    hardcoded Google **test** unit IDs and ignores `.env` entirely (even if
+    `--dart-define-from-file=.env` is passed); **release** builds return the
+    `String.fromEnvironment` values from `.env`, falling back to test IDs if the
+    flag was forgotten (`usingTestUnitIds` flags that). Same gate on the native
+    app ID: Android `build.gradle.kts` sets the manifest placeholder per build
+    type; iOS `Debug.xcconfig` = test app ID, `Release.xcconfig` = prod.
+  - `.env` git-ignored (`.env` + `.env.*`, `!.env.example`); `.env.example`
+    committed with test IDs + the consumption rules.
+  - **VERIFIED in the built binary:** `flutter build apk --release
+    --dart-define-from-file=.env` → `strings lib/*/libapp.so` contains **only**
+    `ca-app-pub-6537371585934021/6948388978` (prod banner), zero test unit IDs.
+    Debug behaviour locked by `test/core/ad_config_test.dart` (runs in
+    `kReleaseMode == false` → asserts test IDs + `usingTestUnitIds`).
+- [x] **7.3 `AdmobBannerWidget`** — 320×50 pinned above system nav on Results; reserves space, never overlaps content (AC-07).
+  - **DONE 2026-09-06**: `admob_banner_widget.dart` rebuilt from the Phase 0
+    no-op into a `ConsumerStatefulWidget`. Loads a `BannerAd`
+    (`AdConfig.bannerUnitId`, `AdSize.banner` = 320×50, `const AdRequest()`) in
+    `initState` **only when** `adsEnabledProvider` is true. Layout: a fixed
+    `Container` of `AppSizes.adBannerHeight (50) + bottom safe-area inset +
+    kSpacingSM (8)` (SOW §5.3 "system bottom inset + 8dp"), `surface`
+    background, ad centred. While the creative is still loading the band is
+    reserved (no content shift on fill, AC-07); on `onAdFailedToLoad` the
+    widget flips `_failed` and collapses to `SizedBox.shrink()` (7.5). Ad
+    disposed in `dispose()`; late `onAdLoaded` after unmount is disposed too.
+  - New provider `lib/core/ads/ads_providers.dart` `adsEnabledProvider`
+    (`Provider<bool>`, true on iOS/Android). Widget tests override it to
+    `false` so the platform channel is never hit.
+  - Wired on `ResultsScreen` via `AppScaffold.bottomNavigationBar` (the slot
+    already earmarked "e.g. AdMob banner on Results"). Removed the old
+    `_ResultsBody` trailing `SizedBox(kSpacing24 + bottomInset)` — the banner
+    now owns the bottom inset; trailing gap is a flat `kSpacing24`.
+  - Tests: `admob_banner_widget_test.dart` (2 — disabled path collapses to 0
+    height with no channel touch; "enabled" path in the SDK-less test host
+    ends collapsed-or-reserved, never a partial band, no zone exception).
+    `results_screen_test.dart` `makeContainer()` now overrides
+    `adsEnabledProvider(false)`.
+  - **DEFERRED to Phase 8 device pass:** real fill on 3 screen sizes,
+    airplane-mode collapse, no-overlap visual check on device (AC-07 final).
+- [x] **7.4 Interstitial** — counter in persistent storage; show on every 5th calculation, never on first use; preload next.
+  - **DONE 2026-09-06** — **client-approved "boundary" model.** The persisted
+    counter (`SharedPreferences` key `ads.calc_count`) advances on **every
+    settled recalculation** via `interstitialCounterProvider` (a `Provider<void>`
+    that `ref.listen`s `emiResultProvider`, deduping identical re-emissions —
+    same pattern as `calculationPersistenceProvider`; watched for app lifetime
+    in `app.dart`). The full-screen ad is only **presented** from
+    `InterstitialAdController.maybeShowAtBoundary()`, which the **CALCULATE EMI**
+    button `await`s immediately before `context.push('/results')` — so it never
+    interrupts slider editing (AdMob policy) and, because the "due" test
+    requires `count >= 5`, never on first use.
+  - `InterstitialAdController` (`interstitial_ad_controller.dart`,
+    `interstitialAdControllerProvider`): `enabled` = `adsEnabledProvider`
+    (false in widget tests ⇒ full no-op, SDK untouched). `isDueAtBoundary` uses
+    integer-group math (`count ~/ 5 > lastShown ~/ 5`) so it is robust to
+    bursty counting and never re-fires within the same group of 5 even if the
+    user taps CALCULATE repeatedly without editing. `_preload()` loads the next
+    `InterstitialAd` (`AdConfig.interstitialUnitId`) on construction and again
+    after each dismiss / show-failure; `.catchError` keeps an SDK-less host
+    (tests) quiet. The show-marker (`ads.calc_count_at_last_interstitial`) is
+    written **before** `ad.show()` so a crash mid-ad can't loop it.
+  - Tests: `interstitial_ad_controller_test.dart` (5 — not due before 5th; due
+    on 5th; disabled = safe no-op; no double-fire within a group; burst past an
+    exact multiple still fires). `calculator_screen_test.dart` + `widget_test.dart`
+    now override `adsEnabledProvider(false)`.
+  - **VERIFIED in binary:** release `libapp.so` now contains both prod unit IDs
+    (`…/6948388978` banner, `…/4978148400` interstitial), no test IDs.
+- [x] **7.5 Failure handling / UMP consent** — ad load failure = collapse gracefully, no layout shift, no crash offline.
+  - **DONE 2026-09-06** (code): banner collapses to `SizedBox.shrink` on
+    `onAdFailedToLoad` (7.3); interstitial `_preload` swallows load errors and
+    `maybeShowAtBoundary` handles `onAdFailedToShowFullScreenContent`;
+    `bootstrapAds()` wraps everything in `try/on Object catch` so a flaky SDK
+    never breaks launch.
+  - **UMP consent WIRED** (`ads_bootstrap.dart` `_gatherUmpConsent`): before
+    `MobileAds.initialize()` it runs
+    `ConsentInformation.instance.requestConsentInfoUpdate(...)` then
+    `ConsentForm.loadAndShowConsentFormIfRequired(...)`. All callbacks/errors
+    resolve a single `Completer`; a 10 s `.timeout` stops a wedged consent
+    service from stalling init. Uses the UMP SDK bundled in `google_mobile_ads`
+    — no new dependency. **Client Phase 10 task:** author the privacy message /
+    GDPR message in the AdMob console (Privacy & messaging) so a real form is
+    served in-region.
+  - **DEFERRED to Phase 8 device pass (DoD):** manual on 3 screen sizes;
+    airplane-mode (banner + interstitial) collapse check; ATT prompt + UMP
+    form flow verified on a real iOS + Android device.
+
+**PHASE 7 STATUS 2026-09-06** — 7.1–7.5 code-complete on branch
+`feat/admob-integration` (not merged, not pushed). `flutter analyze` 0/0 ·
+`dart format` clean · `flutter test` **207 green** (+9 vs Phase 6's 198).
+`flutter build apk --debug` and `--release --dart-define-from-file=.env` both
+succeed; release binary carries only production ad IDs, debug only test IDs.
+iOS build + all on-device checks (AC-07, ATT, UMP form, airplane mode) roll
+into the Phase 8 device pass.
 
 ---
 

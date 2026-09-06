@@ -1,4 +1,5 @@
 import 'package:emi_calculator/app.dart';
+import 'package:emi_calculator/core/ads/ads_providers.dart';
 import 'package:emi_calculator/core/providers/persistence_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,7 +14,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          adsEnabledProvider.overrideWithValue(false),
+        ],
         child: const EmiCalculatorApp(),
       ),
     );
