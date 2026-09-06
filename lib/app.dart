@@ -18,7 +18,9 @@ class EmiCalculatorApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+    // Theme restore is async (SharedPreferences); fall back to system while it
+    // resolves on the first frame.
+    final themeMode = ref.watch(themeModeProvider).value ?? ThemeMode.system;
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
