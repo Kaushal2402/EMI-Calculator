@@ -107,6 +107,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('no overflow at 1.3x with the widest values (₹5cr / 36% / 30yr) '
+      'in dark mode (Phase 8.5)', (tester) async {
+    final container = await makeContainer();
+    container.read(loanInputProvider.notifier)
+      ..setPrincipal(50000000)
+      ..setAnnualRate(36)
+      ..setTenureMonths(360);
+    await container.read(emiResultProvider.future);
+
+    await pumpScreen(
+      tester,
+      container,
+      themeMode: ThemeMode.dark,
+      textScale: 1.3,
+    );
+    await tester.pumpAndSettle();
+
+    // Walk the whole screen top-to-bottom; any RenderFlex overflow throws.
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+    }
+
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('share button sends the SOW §4.7 summary to the platform '
       'share sheet (AC-06)', (tester) async {
     final container = await makeContainer();

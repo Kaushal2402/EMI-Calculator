@@ -702,15 +702,85 @@ into the Phase 8 device pass.
 
 ## Phase 8 — QA, Accessibility, Hardening  (SOW §11 · Timeline Day 3 PM)
 
-- [ ] **8.1 Full acceptance-criteria pass (AC-01…AC-10)** — tick each with its stated verification method; record evidence in `/qa/acceptance.md`.
+> **PHASE 8 IN PROGRESS 2026-09-06** — branch `feat/phase-8-qa` off `develop`
+> (not committed / not merged / not pushed). Non-device work done this session;
+> device-pass items remain open (listed per task below and collected in
+> `qa/acceptance.md`). Gates: `flutter analyze` 0/0 · `dart format` clean ·
+> `dart run custom_lint` clean · `flutter test` **245 passing / 4 skipped**
+> (was 207; +38 new + the 4 skips are the AC-09 outline waivers). New:
+> `test/core/wcag_contrast_test.dart` (27), `test/platform/portrait_lock_test.dart`
+> (3), `test/features/calculator/presentation/widgets/widget_goldens_test.dart`
+> (7, 14 new golden PNGs), +1 Results 1.3× stress test.
+
+- [~] **8.1 Full acceptance-criteria pass (AC-01…AC-10)** — tick each with its stated verification method; record evidence in `/qa/acceptance.md`.
+  - **DONE 2026-09-06 (doc):** `qa/acceptance.md` created — one row per
+    AC-01…AC-10 with SOW verification method, status, and evidence pointer.
+    In-repo PASS: AC-01, AC-05, AC-08, AC-09 (text pairs). PENDING-DEVICE:
+    AC-02, AC-03, AC-04, AC-06, AC-07, AC-10 (each with a "how to finish"
+    line). AC-09 has 2 WAIVED non-text `outline` pairs → `qa/bugs.md` P1-01.
 - [ ] **8.2 Cold-start budget** — Calculator reachable < 2 s on mid-range device; Perfetto/Perfetto trace attached (AC-02).
-- [ ] **8.3 Contrast / WCAG AA** — run contrast analyser on light + dark; fix violations (AC-09).
+  - **DEFERRED — device pass.** Needs a mid-range Android + Perfetto/DevTools
+    timeline (no device/sim in this session). Method in `qa/acceptance.md`
+    AC-02. Structure already protects it (`bootstrapAds()` fire-and-forget in
+    `lib/main.dart`).
+- [x] **8.3 Contrast / WCAG AA** — run contrast analyser on light + dark; fix violations (AC-09).
+  - **DONE 2026-09-06:** `test/core/wcag_contrast_test.dart` — self-contained
+    WCAG 2.1 relative-luminance + ratio maths, iterates every painted fg/bg
+    token pair for both schemes, fails below AA (4.5 text / 3.0 large+UI).
+  - **Fixes:** (a) dark `onPrimaryContainer` `#D3E4FF`→`#E7F0FF` in
+    `app_colors.dart` — segmented-active + break-even text were 4.46:1, now
+    5.01:1 (`onPrimaryContainer` is not SOW §6.1-pinned); (b) `emi_chart.dart`
+    legend label text now default `onSurface` not `secondary` — `#E53935` body
+    text on `surface` was 4.05:1; coloured swatch keeps the identity.
+  - **WAIVED:** `outline` border vs surface/field-fill is 1.47–1.65:1 (below the
+    1.4.11 non-text 3:1). `outline` is SOW §6.1-pinned verbatim → not changed
+    unilaterally; those 2 pairs are `skip`-ped with a written reason. Client
+    decision tracked `qa/bugs.md` **P1-01**. All measured ratios in
+    `qa/acceptance.md`.
 - [ ] **8.4 Min-OS smoke** — no crash on iOS 14 + Android 7 (SDK 24) emulators/devices (AC-10).
-- [ ] **8.5 Orientation & text-scale** — usable at 1.3× font scale; portrait-locked if that's the decision (tablet layout is out of scope §10).
-- [ ] **8.6 Widget + golden test suite** — key widgets, both themes; CI runs them.
-- [ ] **8.7 Manual regression script** — `/qa/regression.md` checklist executed on iOS + Android.
-- [ ] **8.8 Static analysis final gate** — `flutter analyze` 0/0, `dart format` clean, no `// ignore` without reason (AC-08).
-- [ ] **8.9 Bug triage & fix** — burn down P0/P1; P2+ logged as issues.
+  - **DEFERRED — device/emulator pass.** Android `minSdk = 24` ✓. Found: iOS
+    deployment target is `13.0`, below the SOW ≥ 14.0 floor → `qa/bugs.md`
+    **P2-03** (decide in Phase 9.5). Run `qa/regression.md` §11 on an API-24
+    emulator + iOS 14 sim.
+- [x] **8.5 Orientation & text-scale** — usable at 1.3× font scale; portrait-locked if that's the decision (tablet layout is out of scope §10).
+  - **DONE 2026-09-06 — portrait lock implemented** (SOW §5 is portrait-only;
+    landscape/tablet out of scope §10): `lib/main.dart`
+    `SystemChrome.setPreferredOrientations([portraitUp, portraitDown])`;
+    `AndroidManifest.xml` activity `android:screenOrientation="portrait"`;
+    iOS `Info.plist` `UISupportedInterfaceOrientations` (+`~ipad`) trimmed to
+    Portrait only. Guard: `test/platform/portrait_lock_test.dart` (3).
+    Logged/closed as `qa/bugs.md` **P1-02**.
+  - **Text-scale:** audited existing 1.3× no-overflow widget tests for
+    Calculator (`calculator_screen_test.dart`) and Results
+    (`results_screen_test.dart`) — adequate (scroll full screen, assert
+    `takeException()` null). Added a Results 1.3× **stress** test at the widest
+    values (₹5cr / 36% / 30yr, dark). On-device max-font check → regression §9.
+- [x] **8.6 Widget + golden test suite** — key widgets, both themes; CI runs them.
+  - **DONE 2026-09-06:** `widget_goldens_test.dart` adds light+dark goldens for
+    loan type selector, amount/rate/tenure input fields, metric tile, emi chart,
+    amortization table (14 new PNGs). `summary_card` goldens already existed.
+    CI runs them via the existing `flutter test` step in `.github/workflows/ci.yml`
+    (no workflow change needed). `AdmobBannerWidget` golden skipped — nothing
+    deterministic to snapshot (`qa/bugs.md` **P2-02**). Cross-host golden
+    sensitivity noted as **P2-01** (matches the pre-existing `summary_card`
+    pattern; not a regression).
+- [~] **8.7 Manual regression script** — `/qa/regression.md` checklist executed on iOS + Android.
+  - **DONE 2026-09-06 (authored):** `qa/regression.md` — 12 sections, every
+    screen / input path / share / ad banner no-overlap / interstitial boundary
+    / ATT + UMP / theme toggle / offline / rotation / min-OS smoke.
+    **NOT executed** — needs physical iOS + Android devices.
+- [x] **8.8 Static analysis final gate** — `flutter analyze` 0/0, `dart format` clean, no `// ignore` without reason (AC-08).
+  - **DONE 2026-09-06:** `flutter analyze` → "No issues found!";
+    `dart format --output=none --set-exit-if-changed .` clean;
+    `dart run custom_lint` clean. `// ignore` audit: every hit is in generated
+    `*.freezed.dart` (tool output, re-generated by `build_runner`) — **zero
+    hand-authored ignores** in first-party `lib/`/`test/`. Recorded in
+    `qa/acceptance.md`.
+- [~] **8.9 Bug triage & fix** — burn down P0/P1; P2+ logged as issues.
+  - **DONE 2026-09-06:** `qa/bugs.md` P0/P1/P2 table. **No P0.** P1-02 (portrait
+    lock) FIXED this session. P1-01 (outline contrast) OPEN — needs client
+    decision, waiver in place. P2-01..04 logged. Remaining burn-down + any
+    device-found bugs → after the device pass.
 
 ---
 

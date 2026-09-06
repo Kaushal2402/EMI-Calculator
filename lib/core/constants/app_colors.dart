@@ -44,7 +44,11 @@ abstract final class AppColors {
     primary: Color(0xFF90CAF9),
     onPrimary: Color(0xFF003C8F),
     primaryContainer: Color(0xFF1565C0),
-    onPrimaryContainer: Color(0xFFD3E4FF),
+    // Lightened from the M3-default #D3E4FF (4.46:1 on primaryContainer) to
+    // clear WCAG AA normal-text 4.5:1 for the dark segmented-button active
+    // label and the amortization break-even row text (AC-09, Phase 8.3).
+    // `onPrimaryContainer` is not one of the SOW §6.1-pinned tokens.
+    onPrimaryContainer: Color(0xFFE7F0FF),
     secondary: Color(0xFFEF9A9A),
     onSecondary: Color(0xFF680003),
     secondaryContainer: Color(0xFF930006),
