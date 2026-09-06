@@ -118,14 +118,40 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
 
 ## Phase 2 — Data Layer  (SOW §7.5)
 
-- [ ] **2.1 `LoanLocalDataSource` impl** — persist/restore last `LoanInput` + `ThemeMode` to SharedPreferences.
+- [x] **2.1 `LoanLocalDataSource` impl** — persist/restore last `LoanInput` + `ThemeMode` to SharedPreferences.
   - DoD: widget/integration test writes then reads back identical input.
+  - **DONE 2026-09-06** (branch `feat/data-layer`, commit `f1de00d`): `LoanInputDto`
+    (data-layer, hand-written JSON mapping, `schemaVersion` field for future
+    migrations) + `LoanLocalDataSourceImpl` over `SharedPreferences`. Last input =
+    one JSON string at key `calculator.last_input`; enums by `.name`,
+    order-independent; corrupt/incompatible blob degrades to `null` (no throw).
+    **DECISION:** theme persistence added to the same datasource contract
+    (`readThemeMode`/`writeThemeMode`, key `settings.theme_mode` = `ThemeMode.name`)
+    — no theme repo in domain, Phase 3.2 wires the provider. Data layer imports
+    `flutter` `ThemeMode` (allowed — only domain is purity-gated).
+    **DEVIATION:** added `data/models/` dir (not in SOW §8's illustrative tree) for
+    `loan_input_dto.dart` — standard Clean Architecture data-layer location.
+    25 new tests (round-trip identity for every `LoanInput` + `ThemeMode`, simulated
+    restart, corrupt-blob handling). `analyze` 0/0.
 
-- [ ] **2.2 `LoanRepositoryImpl`** — wires datasource to domain interface; maps DTO ↔ entity.
+- [x] **2.2 `LoanRepositoryImpl`** — wires datasource to domain interface; maps DTO ↔ entity.
   - DoD: unit test with fake datasource; no `SharedPreferences` in domain.
+  - **DONE 2026-09-06** (commit `07fd372`): thin adapter delegating
+    `getLastInput`/`saveLastInput` to `LoanLocalDataSource`. DTO ↔ entity mapping
+    stays in the datasource (per the 1.5 contract), so the repo owns only wiring +
+    (in 2.3) the first-launch fallback. No `shared_preferences` import in `domain/`
+    — enforced by `domain_layer_purity_test.dart`. Unit-tested against an in-memory
+    `FakeLoanLocalDataSource`.
 
-- [ ] **2.3 First-launch defaults** — when no persisted state, seed Home Loan defaults (SOW §4.1).
+- [x] **2.3 First-launch defaults** — when no persisted state, seed Home Loan defaults (SOW §4.1).
   - DoD: fresh install opens with ₹30,00,000 / 8.50% / 20 yrs.
+  - **DONE 2026-09-06** (commit `36ddd91`). **DECISION:** `LoanRepository.getLastInput()`
+    changed from `Future<LoanInput?>` to non-nullable `Future<LoanInput>` — the
+    repo returns the Home Loan preset on a cold start (or unreadable blob) so the
+    Phase 3 provider never special-cases `null`. Defaults live in
+    `core/constants/loan_defaults.dart` as `loanInputFromDefaults(LoanType)` /
+    `firstLaunchLoanInput()` — one source of truth, reused by the AC-05 tab-switch
+    reset. Test proves a fresh install yields ₹30,00,000 / 8.50% / 240 months.
 
 ---
 
