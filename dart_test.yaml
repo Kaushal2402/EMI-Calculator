@@ -1,0 +1,6 @@
+# Test tags. `preview` marks the full-screen design-review snapshots in
+# test/preview/ — they pump every screen (so layout errors still fail CI) but
+# only write PNGs under `--update-goldens`; the pixel match is not a CI gate.
+tags:
+  preview:
+    description: Full-screen visual previews for design review.

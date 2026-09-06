@@ -3,6 +3,8 @@ import 'package:emi_calculator/core/constants/app_colors.dart';
 import 'package:emi_calculator/core/router/app_router.dart';
 import 'package:emi_calculator/core/theme/app_theme.dart';
 import 'package:emi_calculator/core/theme/theme_provider.dart';
+import 'package:emi_calculator/features/calculator/presentation/providers/calculation_persistence_provider.dart';
+import 'package:emi_calculator/features/calculator/presentation/providers/interstitial_ad_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,7 +20,20 @@ class EmiCalculatorApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+    // Keep the app-lifetime side-effect listeners subscribed:
+    //  • persist inputs after every successful calculation (task 3.5)
+    //  • advance the interstitial calculation counter (task 7.4)
+    //  • build the interstitial controller now so it starts preloading at
+    //    launch (not lazily on the first calculation), giving the first
+    //    every-5th boundary a filled slot.
+    ref
+      ..watch(calculationPersistenceProvider)
+      ..watch(interstitialCounterProvider)
+      ..watch(interstitialAdControllerProvider);
+
+    // Theme restore is async (SharedPreferences); fall back to system while it
+    // resolves on the first frame.
+    final themeMode = ref.watch(themeModeProvider).value ?? ThemeMode.system;
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {

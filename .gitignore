@@ -63,3 +63,6 @@ android/app/google-services.json
 # Rationale: reproducible CI without a codegen step, reviewable diffs on entity
 # changes, and it matches TASKS.md 0.2 ("*.g.dart kept"). Do NOT add ignore
 # rules for those files.
+
+# Flutter golden-test diff output
+**/failures/

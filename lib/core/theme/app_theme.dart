@@ -32,7 +32,7 @@ abstract final class AppTheme {
       appBarTheme: AppBarTheme(
         toolbarHeight: AppSizes.appBarHeight,
         centerTitle: false,
-        scrolledUnderElevation: 2,
+        scrolledUnderElevation: 3,
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
         titleTextStyle: textTheme.headlineSmall,
@@ -41,9 +41,11 @@ abstract final class AppTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(AppSizes.ctaButtonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusMD),
+            borderRadius: BorderRadius.circular(AppSizes.radiusLG),
           ),
-          textStyle: textTheme.labelLarge,
+          textStyle: textTheme.labelLarge?.copyWith(
+            letterSpacing: 0.5,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -55,6 +57,28 @@ abstract final class AppTheme {
           textStyle: textTheme.labelLarge,
         ),
       ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: SegmentedButton.styleFrom(
+          selectedBackgroundColor: scheme.primaryContainer,
+          selectedForegroundColor: scheme.onPrimaryContainer,
+          foregroundColor: scheme.onSurfaceVariant,
+          side: BorderSide(color: scheme.outlineVariant),
+          shape: const StadiumBorder(),
+        ),
+      ),
+      sliderTheme: SliderThemeData(
+        trackHeight: 4,
+        activeTrackColor: scheme.primary,
+        inactiveTrackColor: scheme.primary.withValues(alpha: 0.14),
+        thumbColor: scheme.primary,
+        overlayColor: scheme.primary.withValues(alpha: 0.12),
+        valueIndicatorColor: scheme.primary,
+        trackShape: const RoundedRectSliderTrackShape(),
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
+        // Discrete sliders (rate, tenure) otherwise render a busy dotted track.
+        tickMarkShape: SliderTickMarkShape.noTickMark,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerHighest,
@@ -65,21 +89,28 @@ abstract final class AppTheme {
           horizontal: kSpacingLG,
           vertical: kSpacingMD,
         ),
+        // Filled field, no resting outline (the fill + floating label carry
+        // the affordance); a 2dp primary ring on focus. Also retires the
+        // low-contrast resting `outline` border (qa/bugs.md P1-01).
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMD),
-          borderSide: BorderSide(color: scheme.outline),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMD),
-          borderSide: BorderSide(color: scheme.outline),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+          borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: scheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMD),
-          side: BorderSide(color: scheme.outline),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+          side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
       dividerTheme: DividerThemeData(color: scheme.outlineVariant),

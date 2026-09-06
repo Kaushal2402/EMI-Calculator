@@ -22,23 +22,60 @@ abstract final class AppRoutes {
   static const String info = '/info';
 }
 
-/// The app's [GoRouter] instance.
+/// A [Page] that presents its [child] as a Material modal bottom sheet
+/// (SOW §5.4): drag handle, drag-to-dismiss, capped at 60% of screen height.
 ///
-/// PHASE 0 SCAFFOLD: flat route table with empty screens. `/info` is modelled
-/// as a full-screen dialog page here; task 6.1 swaps it for a proper
-/// drag-to-dismiss modal bottom sheet.
+/// Used for the `/info` route so the About sheet participates in normal
+/// GoRouter navigation (`context.push('/info')` opens it, a drag or scrim tap
+/// pops it).
+class ModalBottomSheetPage<T> extends Page<T> {
+  /// Creates a modal-bottom-sheet page.
+  const ModalBottomSheetPage({required this.child, super.key});
+
+  /// The sheet content.
+  final Widget child;
+
+  @override
+  Route<T> createRoute(BuildContext context) {
+    return ModalBottomSheetRoute<T>(
+      settings: this,
+      builder: (_) => child,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+      ),
+    );
+  }
+}
+
+/// A [Page] that cross-fades instead of the platform push/slide — used for the
+/// splash → calculator hand-off so there is no half-and-half slide.
+CustomTransitionPage<void> _fadePage(Widget child, GoRouterState state) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 280),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        FadeTransition(opacity: animation, child: child),
+  );
+}
+
+/// The app's [GoRouter] instance (SOW §7.3).
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
   routes: [
     GoRoute(
       path: AppRoutes.splash,
       name: 'splash',
-      builder: (context, state) => const SplashScreen(),
+      pageBuilder: (context, state) => _fadePage(const SplashScreen(), state),
     ),
     GoRoute(
       path: AppRoutes.calculator,
       name: 'calculator',
-      builder: (context, state) => const CalculatorScreen(),
+      pageBuilder: (context, state) =>
+          _fadePage(const CalculatorScreen(), state),
     ),
     GoRoute(
       path: AppRoutes.results,
@@ -48,8 +85,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.info,
       name: 'info',
-      pageBuilder: (context, state) => const MaterialPage(
-        fullscreenDialog: true,
+      pageBuilder: (context, state) => const ModalBottomSheetPage<void>(
         child: InfoBottomSheet(),
       ),
     ),
