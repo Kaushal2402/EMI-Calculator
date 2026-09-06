@@ -436,6 +436,11 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
   the summary tiles + chart centre; (b) break-even row highlight styling
   (`primaryContainer` fill + primary rule); (c) on-device perf captures
   (AC-03/AC-04) to be produced in the Phase 8 device pass.
+  **CONFIRMED 2026-09-06 (client):** (a) full Indian format — keep as built
+  (`₹62,48,368`, no compact `L`/`Cr` in tiles or chart centre); (b) break-even
+  highlight styling approved as built (`primaryContainer` fill + 3px `primary`
+  leading rule + `w600`); (c) on-device AC-03/AC-04 perf evidence to be captured
+  in the Phase 8 device pass. No code changes — branch ready to merge.
 
 ---
 
