@@ -11,8 +11,15 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
 
 - [ ] **0.1 🔒 Create Flutter project**
   - `flutter create --org com.softpital --platforms=ios,android emi_calculator`
-  - Set app name "EMI Calculator", bundle id `com.softpital.emicalculator`.
+  - Set app name "EMI Calculator", bundle id `com.softpitalservices.emicalculator`.
   - DoD: `flutter run` shows counter app on iOS sim + Android emulator.
+  - **CLIENT CONFIRMED 2026-09-06:** application/bundle id org segment renamed
+    `softpital` → `softpitalservices`, so the id is now
+    `com.softpitalservices.emicalculator`. Swept across Android
+    (`applicationId`, `namespace`, Kotlin package + dir), iOS
+    (`PRODUCT_BUNDLE_IDENTIFIER` for Runner Debug/Release/Profile;
+    `RunnerTests` rebased to `com.softpitalservices.emicalculator.RunnerTests`).
+    Branch `feat/rename-bundle-id`. No signing/keystore/store changes.
 
 - [ ] **0.2 🔒 Init git repo & branching model**
   - `git init`, add `.gitignore` (Flutter default + `.env`, `*.g.dart` kept, build/).

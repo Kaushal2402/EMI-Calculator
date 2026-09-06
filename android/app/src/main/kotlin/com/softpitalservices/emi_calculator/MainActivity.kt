@@ -1,4 +1,4 @@
-package com.softpital.emi_calculator
+package com.softpitalservices.emi_calculator
 
 import io.flutter.embedding.android.FlutterActivity
 
