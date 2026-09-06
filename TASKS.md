@@ -702,10 +702,12 @@ into the Phase 8 device pass.
 
 ## Phase 8 — QA, Accessibility, Hardening  (SOW §11 · Timeline Day 3 PM)
 
-> **PHASE 8 IN PROGRESS 2026-09-06** — branch `feat/phase-8-qa` off `develop`
-> (not committed / not merged / not pushed). Non-device work done this session;
-> device-pass items remain open (listed per task below and collected in
-> `qa/acceptance.md`). Gates: `flutter analyze` 0/0 · `dart format` clean ·
+> **PHASE 8 NON-DEVICE SCOPE MERGED 2026-09-06** — branch `feat/phase-8-qa`
+> committed `bce3518`, merged into `develop` via `--no-ff` (merge `d699682`),
+> feature branch deleted. Not pushed (established pattern). Device-pass items
+> (8.2, 8.4, and the on-device evidence for AC-02/03/04/06/07/10) remain open —
+> listed per task below and collected in `qa/acceptance.md`. Gates re-verified
+> on `develop` post-merge: `flutter analyze` 0/0 · `dart format` clean ·
 > `dart run custom_lint` clean · `flutter test` **245 passing / 4 skipped**
 > (was 207; +38 new + the 4 skips are the AC-09 outline waivers). New:
 > `test/core/wcag_contrast_test.dart` (27), `test/platform/portrait_lock_test.dart`
