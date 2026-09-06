@@ -3,10 +3,12 @@ import 'package:emi_calculator/core/theme/app_theme.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/emi_result_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/loan_input_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/screens/results_screen.dart';
+import 'package:emi_calculator/features/calculator/presentation/utils/emi_share_text.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/amortization_table.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/emi_chart.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/summary_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -100,6 +102,42 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('share button sends the SOW §4.7 summary to the platform '
+      'share sheet (AC-06)', (tester) async {
+    final container = await makeContainer();
+    final input = await container.read(loanInputProvider.future);
+    final result = await container.read(emiResultProvider.future);
+
+    String? sharedText;
+    const shareChannel = MethodChannel('dev.fluttercommunity.plus/share');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      shareChannel,
+      (call) async {
+        if (call.method == 'share') {
+          sharedText = (call.arguments as Map)['text'] as String;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        shareChannel,
+        null,
+      ),
+    );
+
+    await pumpScreen(tester, container);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.share));
+    await tester.pumpAndSettle();
+
+    expect(sharedText, isNotNull);
+    expect(sharedText, buildEmiShareText(input: input, result: result));
+    expect(sharedText, startsWith('EMI Calculator Result — Softpital'));
+    expect(sharedText, endsWith('Calculated using EMI Calculator App'));
   });
 
   testWidgets('360-row schedule is built lazily (AC-04)', (tester) async {
