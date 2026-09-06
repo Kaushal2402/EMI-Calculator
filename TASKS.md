@@ -642,9 +642,59 @@ Unblocks **Phase 7 — AdMob** (`AdmobBannerWidget` on Results, interstitial-eve
     `adsEnabledProvider(false)`.
   - **DEFERRED to Phase 8 device pass:** real fill on 3 screen sizes,
     airplane-mode collapse, no-overlap visual check on device (AC-07 final).
-- [ ] **7.4 Interstitial** — counter in persistent storage; show on every 5th calculation, never on first use; preload next.  *(BLOCKED on the interstitial-timing confirmation above.)*
-- [ ] **7.5 Failure handling** — ad load failure = collapse gracefully, no layout shift, no crash offline.
-  - DoD (phase): manual on 3 screen sizes; airplane-mode test; consent/ATT flow verified.
+- [x] **7.4 Interstitial** — counter in persistent storage; show on every 5th calculation, never on first use; preload next.
+  - **DONE 2026-09-06** — **client-approved "boundary" model.** The persisted
+    counter (`SharedPreferences` key `ads.calc_count`) advances on **every
+    settled recalculation** via `interstitialCounterProvider` (a `Provider<void>`
+    that `ref.listen`s `emiResultProvider`, deduping identical re-emissions —
+    same pattern as `calculationPersistenceProvider`; watched for app lifetime
+    in `app.dart`). The full-screen ad is only **presented** from
+    `InterstitialAdController.maybeShowAtBoundary()`, which the **CALCULATE EMI**
+    button `await`s immediately before `context.push('/results')` — so it never
+    interrupts slider editing (AdMob policy) and, because the "due" test
+    requires `count >= 5`, never on first use.
+  - `InterstitialAdController` (`interstitial_ad_controller.dart`,
+    `interstitialAdControllerProvider`): `enabled` = `adsEnabledProvider`
+    (false in widget tests ⇒ full no-op, SDK untouched). `isDueAtBoundary` uses
+    integer-group math (`count ~/ 5 > lastShown ~/ 5`) so it is robust to
+    bursty counting and never re-fires within the same group of 5 even if the
+    user taps CALCULATE repeatedly without editing. `_preload()` loads the next
+    `InterstitialAd` (`AdConfig.interstitialUnitId`) on construction and again
+    after each dismiss / show-failure; `.catchError` keeps an SDK-less host
+    (tests) quiet. The show-marker (`ads.calc_count_at_last_interstitial`) is
+    written **before** `ad.show()` so a crash mid-ad can't loop it.
+  - Tests: `interstitial_ad_controller_test.dart` (5 — not due before 5th; due
+    on 5th; disabled = safe no-op; no double-fire within a group; burst past an
+    exact multiple still fires). `calculator_screen_test.dart` + `widget_test.dart`
+    now override `adsEnabledProvider(false)`.
+  - **VERIFIED in binary:** release `libapp.so` now contains both prod unit IDs
+    (`…/6948388978` banner, `…/4978148400` interstitial), no test IDs.
+- [x] **7.5 Failure handling / UMP consent** — ad load failure = collapse gracefully, no layout shift, no crash offline.
+  - **DONE 2026-09-06** (code): banner collapses to `SizedBox.shrink` on
+    `onAdFailedToLoad` (7.3); interstitial `_preload` swallows load errors and
+    `maybeShowAtBoundary` handles `onAdFailedToShowFullScreenContent`;
+    `bootstrapAds()` wraps everything in `try/on Object catch` so a flaky SDK
+    never breaks launch.
+  - **UMP consent WIRED** (`ads_bootstrap.dart` `_gatherUmpConsent`): before
+    `MobileAds.initialize()` it runs
+    `ConsentInformation.instance.requestConsentInfoUpdate(...)` then
+    `ConsentForm.loadAndShowConsentFormIfRequired(...)`. All callbacks/errors
+    resolve a single `Completer`; a 10 s `.timeout` stops a wedged consent
+    service from stalling init. Uses the UMP SDK bundled in `google_mobile_ads`
+    — no new dependency. **Client Phase 10 task:** author the privacy message /
+    GDPR message in the AdMob console (Privacy & messaging) so a real form is
+    served in-region.
+  - **DEFERRED to Phase 8 device pass (DoD):** manual on 3 screen sizes;
+    airplane-mode (banner + interstitial) collapse check; ATT prompt + UMP
+    form flow verified on a real iOS + Android device.
+
+**PHASE 7 STATUS 2026-09-06** — 7.1–7.5 code-complete on branch
+`feat/admob-integration` (not merged, not pushed). `flutter analyze` 0/0 ·
+`dart format` clean · `flutter test` **207 green** (+9 vs Phase 6's 198).
+`flutter build apk --debug` and `--release --dart-define-from-file=.env` both
+succeed; release binary carries only production ad IDs, debug only test IDs.
+iOS build + all on-device checks (AC-07, ATT, UMP form, airplane mode) roll
+into the Phase 8 device pass.
 
 ---
 

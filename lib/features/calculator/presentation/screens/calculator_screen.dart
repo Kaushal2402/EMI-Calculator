@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:emi_calculator/core/constants/app_spacing.dart';
 import 'package:emi_calculator/core/router/app_router.dart';
 import 'package:emi_calculator/features/calculator/domain/entities/loan_input.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/emi_result_provider.dart';
+import 'package:emi_calculator/features/calculator/presentation/providers/interstitial_ad_controller.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/loan_input_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/tenure_unit_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/amount_input_field.dart';
@@ -104,7 +107,17 @@ class _CalculatorForm extends ConsumerWidget {
           const SizedBox(height: kSpacing32),
           FilledButton(
             onPressed: canCalculate
-                ? () => context.push(AppRoutes.results)
+                ? () async {
+                    // Boundary point for the every-5th-calculation interstitial
+                    // (SOW §4.8, task 7.4). Always resolves; navigation follows
+                    // whether or not an ad was shown.
+                    await ref
+                        .read(interstitialAdControllerProvider)
+                        .maybeShowAtBoundary();
+                    if (context.mounted) {
+                      unawaited(context.push(AppRoutes.results));
+                    }
+                  }
                 : null,
             child: const Text('CALCULATE EMI'),
           ),

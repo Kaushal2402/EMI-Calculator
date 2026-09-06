@@ -1,3 +1,4 @@
+import 'package:emi_calculator/core/ads/ads_providers.dart';
 import 'package:emi_calculator/core/providers/persistence_providers.dart';
 import 'package:emi_calculator/core/theme/app_theme.dart';
 import 'package:emi_calculator/features/calculator/domain/entities/loan_input.dart';
@@ -26,6 +27,8 @@ void main() {
         sharedPreferencesProvider.overrideWithValue(prefs),
         // Run the engine synchronously so the CTA gate settles immediately.
         calcDebounceProvider.overrideWithValue(Duration.zero),
+        // No live interstitial in widget tests.
+        adsEnabledProvider.overrideWithValue(false),
       ],
     );
     addTearDown(container.dispose);
