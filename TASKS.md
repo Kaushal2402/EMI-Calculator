@@ -328,13 +328,119 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
 
 ## Phase 5 — Results Screen  (SOW §5.3 · Timeline Day 2 PM)
 
-- [ ] **5.1 `MetricTile` + `SummaryCard`** — 3 tiles (EMI / Total Interest / Total Payable); outlined, r12, elevation 0; `tabular figures`.
-- [ ] **5.2 `EmiChart`** — `fl_chart` PieChart donut, 200dp; Principal (primary) vs Interest (secondary); centre = Total Payable; legend w/ % + absolute; 1200 ms ease-in-out first render, instant on drag (SOW §4.5).
-- [ ] **5.3 `AmortizationTable`** — Monthly/Yearly `ToggleButtons`; columns Yr/Mo, EMI, Principal, Interest, Balance; sticky header; alt-row `surfaceVariant`; row h48; `FontFeature.tabularFigures()`.
-- [ ] **5.4 Break-even highlight** — highlight first row where cumulative principal > cumulative interest (SOW §4.4).
-- [ ] **5.5 Performance pass** — 360-row list scrolls at 60 fps; use `ListView.builder`/lazy `DataTable` alternative (AC-04).
-- [ ] **5.6 Results render budget** — visible within 300 ms of Calculate tap; verify via devtools timeline (AC-03).
-  - DoD (phase): golden test for SummaryCard; perf overlay screenshot attached to PR.
+- [x] **5.1 `MetricTile` + `SummaryCard`** — 3 tiles (EMI / Total Interest / Total Payable); outlined, r12, elevation 0; `tabular figures`.
+  - **DONE 2026-09-06** (branch `feat/results-screen`): `MetricTile` = value
+    (`titleLarge` token bumped to `w700`, `FontFeature.tabularFigures()`,
+    shrink-to-fit so long amounts / large text scales never overflow) over a
+    4dp gap over an ALL-CAPS `labelSmall` label (`onSurfaceVariant`, `0.08em`
+    tracking). `SummaryCard` = `Card` (elevation 0 / r12 / outline all inherited
+    from `cardTheme`), inner padding `py=20 / px=16`, three `Expanded` tiles
+    with 8dp `SizedBox` gaps. Outer `mx=16` is the screen padding, so the card
+    `margin` is `EdgeInsets.zero`. Widgets take **unrounded** `EmiResult`
+    figures and apply SOW §4.3 display rounding themselves via
+    `double_ext.toIndianCurrency()` (nearest ₹1, Indian numerals).
+  - **DECISION — all three tiles use full Indian format, not the §5.3 ASCII's
+    compact `32.4L` form.** SOW §4.6's tile table shows `₹XX,XX,XXX`; the ASCII
+    mock is space-constrained shorthand. Full values are exact and fit via the
+    tile's `FittedBox` scale-down. Flag if the client wants compact.
+  - 5 tests incl. per-value rounding (`26034.867 → ₹26,035`) and light+dark
+    **golden files** (`.../widgets/goldens/summary_card_{light,dark}.png`).
+- [x] **5.2 `EmiChart`** — `fl_chart` PieChart donut, 200dp; Principal (primary) vs Interest (secondary); centre = Total Payable; legend w/ % + absolute; 1200 ms ease-in-out first render, instant on drag (SOW §4.5).
+  - **DONE 2026-09-06**: `fl_chart` **1.x** `PieChart` (API differs from SOW
+    §4.5's 0.68 sketch — treated as intent). 200dp diameter, section radius 26,
+    `centerSpaceRadius = 100 − 26`. Principal segment `scheme.primary`, interest
+    `scheme.secondary`. Legend below: 12dp gap to the donut, 8dp between the two
+    rows; each row = 12dp rounded swatch + name (tinted to the segment colour) +
+    `Spacer` + whole-number `%` + absolute `₹` value, both tabular.
+  - **DECISION — animation via a dedicated `AnimationController`, not
+    `PieChart`'s implicit tween.** A 1200ms ease-in-out controller sweeps the
+    donut from empty→full on first mount using a third *filler* section sized
+    `total × (1 − f)`; `PieChart` itself runs `duration: Duration.zero`, so once
+    the controller completes (`f == 1`) later prop changes (slider drags on a
+    still-mounted chart) snap with no re-animation — exactly the SOW rule.
+  - **DECISION — centre label = `headlineSmall` + full `toIndianCurrency()`
+    inside a `FittedBox`,** with a small `TOTAL PAYABLE` caps caption above it.
+    "Large type" is honoured (as large as fits the 132dp hole); full value keeps
+    it exact vs the ASCII's `₹62.4L`. Flag if the client wants the compact form.
+  - 5 tests: legend names, `%` summing to 100 (incl. the 48/52 rounding case),
+    absolute values, centre label, and the first-render sweep settling at 1200ms.
+- [x] **5.3 `AmortizationTable`** — Monthly/Yearly `ToggleButtons`; columns Yr/Mo, EMI, Principal, Interest, Balance; sticky header; alt-row `surfaceVariant`; row h48; `FontFeature.tabularFigures()`.
+  - **DONE 2026-09-06**: new **presentation-only** provider
+    `amortizationUnitProvider` → `NotifierProvider<AmortizationUnit>`
+    (`monthly` default), deliberately separate from `tenureUnitProvider` per the
+    phase brief — new `AmortizationUnit { monthly, yearly }` enum rather than
+    reusing `TenureUnit`, which means something else.
+  - `AmortizationTable` renders as a **sliver** (`SliverMainAxisGroup`) so it
+    drops straight into the Results screen's single `CustomScrollView`: own
+    `SectionLabel('Amortization')` (`mt=24`), `h36` `ToggleButtons`, then a
+    **`SliverPersistentHeader(pinned: true)`** header (48dp extent, opaque
+    `surface` bg + bottom divider) that sticks under the AppBar while rows
+    scroll. Columns share a `_columnFlex = [3,4,4,4,5]` list between header and
+    rows so they stay aligned; first column header is `MONTH`/`YEAR` by mode.
+    Rows: 48dp, whole-rupee Indian grouping (no `₹` to save width, matching the
+    ASCII), `FontFeature.tabularFigures()` on every numeric cell, alt-row bg =
+    `surfaceContainerHighest` (the token SOW calls `surfaceVariant`). Every cell
+    is a `FittedBox` scale-down for large text scales.
+- [x] **5.4 Break-even highlight** — highlight first row where cumulative principal > cumulative interest (SOW §4.4).
+  - **DONE 2026-09-06**: highlight index comes from `amortizationProvider`'s
+    `monthlyBreakEvenIndex` / `yearlyBreakEvenIndex` (the **crossover**
+    definition settled in task 1.4 — first period whose principal component >
+    its interest component). Applied in **both** Monthly and Yearly modes.
+  - **DECISION — highlight styling (SOW doesn't specify):** `primaryContainer`
+    row fill + a 3px `primary` leading rule + `w600` cell text +
+    `onPrimaryContainer` text colour. Clearly distinct from the alt-row
+    `surfaceVariant` tint in both themes. Flag if the client wants something
+    subtler.
+  - Home Loan default: Monthly row highlighted at index 142 (month 143), Yearly
+    at index 12 (year 13) — asserted by widget tests.
+- [x] **5.5 Performance pass** — 360-row list scrolls at 60 fps; use `ListView.builder`/lazy `DataTable` alternative (AC-04).
+  - **DONE 2026-09-06**: rows are a lazy `SliverList.builder` — **no** 360-child
+    `DataTable`. Each row is a fixed-height `Container` + `Row` of `Expanded`
+    cells (no per-row `Expensive` layout, no shadows — M3 tonal only). Widget
+    test with a 360-month schedule asserts `< 40` `_ScheduleRow` instances are
+    ever built (only the on-screen window), which is the structural guarantee
+    behind AC-04.
+  - **EVIDENCE / METHOD for the on-device 60fps check (deferred to Phase 8.2 /
+    device pass, no mid-range device in this environment):** run a profile build,
+    enable the Performance overlay (`flutter run --profile`, `P`), open Results
+    with the Home default, fling the amortization list top→bottom→top. Expect
+    the raster + UI bars to stay under the 16.6ms line with no red frames.
+    Capture the overlay screenshot into `/qa/`. Same for a 360-month loan.
+- [x] **5.6 Results render budget** — visible within 300 ms of Calculate tap; verify via devtools timeline (AC-03).
+  - **DONE 2026-09-06**: Results screen is one `CustomScrollView` fed by the
+    **warm** `emiResultProvider` (kept alive by the Calculator form, Phase 4.6),
+    so `SummaryCard` + `EmiChart` build on the **first frame** with no async
+    gap. `amortizationProvider` is a pure derivation of the already-resolved
+    result (yearly aggregation + crossover scan over ≤360 rows, sub-millisecond)
+    that settles on the same microtask drain; a spinner sliver is only a
+    fallback. Widget test pumps the screen after warming the provider and
+    asserts `SummaryCard` + the `₹26,035` EMI are present after a **single**
+    `tester.pump()` (no `pumpAndSettle`) — i.e. zero frames of loading state.
+  - **EVIDENCE / METHOD for the on-device 300ms check (deferred to Phase 8):**
+    `flutter run --profile`, DevTools → Performance → Timeline; tap CALCULATE
+    EMI; measure from the pointer-up event to the first fully-painted Results
+    frame. Expect < 300ms (the calc itself already ran on the Calculator screen).
+  - DoD (phase): golden test for SummaryCard ✓ (light + dark); perf overlay
+    screenshot — **method documented above, capture deferred to the Phase 8
+    device pass** (no mid-range device available here).
+- **PHASE 5 DONE 2026-09-06** — branch `feat/results-screen` (not merged, not
+  pushed). `flutter analyze` 0/0 · `dart format .` clean · `dart run custom_lint`
+  clean · `flutter test` **183 green** (+23 vs Phase 4's 160). New tests:
+  `summary_card_test` (5, incl. 2 goldens), `emi_chart_test` (5),
+  `amortization_unit_provider_test` (3), `amortization_table_test` (5),
+  `results_screen_test` (5). Light/dark parity + 1.3× text scale verified by
+  widget test (`takeException()` null after scrolling the full screen in both
+  themes). Also added `test/flutter_test_config.dart` to disable `google_fonts`
+  runtime fetching so goldens are deterministic.
+  **NEEDS CLIENT CONFIRMATION:** (a) full Indian format vs compact `32.4L` in
+  the summary tiles + chart centre; (b) break-even row highlight styling
+  (`primaryContainer` fill + primary rule); (c) on-device perf captures
+  (AC-03/AC-04) to be produced in the Phase 8 device pass.
+  **CONFIRMED 2026-09-06 (client):** (a) full Indian format — keep as built
+  (`₹62,48,368`, no compact `L`/`Cr` in tiles or chart centre); (b) break-even
+  highlight styling approved as built (`primaryContainer` fill + 3px `primary`
+  leading rule + `w600`); (c) on-device AC-03/AC-04 perf evidence to be captured
+  in the Phase 8 device pass. No code changes — branch ready to merge.
 
 ---
 
