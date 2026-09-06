@@ -2,7 +2,7 @@
 #include "Generated.xcconfig"
 
 // AdMob application ID (SOW §4.8 · TASKS 7.1). Referenced by Info.plist's
-// GADApplicationIdentifier. TEST app ID by default — swap for the real
-// ADMOB_APP_ID_IOS before shipping (Phase 9.5) or inject it in CI. Xcode
-// treats "//" as a comment, so keep the "~" form (no slashes) in this value.
-ADMOB_APP_ID_IOS = ca-app-pub-3940256099942544~1458002511
+// GADApplicationIdentifier. PRODUCTION iOS app ID (client, 2026-09-06);
+// Debug.xcconfig keeps Google's test app ID for dev builds. Xcode treats "//"
+// as a comment, so keep the "~" form (no slashes) in this value.
+ADMOB_APP_ID_IOS = ca-app-pub-6537371585934021~9820140496

@@ -7,14 +7,16 @@ plugins {
 }
 
 // AdMob application ID (SOW §4.8 · TASKS 7.2). Gradle can't read Dart defines,
-// so the native app ID is sourced from the project-root .env (git-ignored),
-// falling back to Google's public test app ID when .env is absent (dev / CI).
-val admobAppIdAndroid: String = run {
-    val fallback = "ca-app-pub-3940256099942544~3347511713" // Google test app ID
+// so the native app ID is sourced from the project-root .env (git-ignored).
+// `release` builds use it; `debug` builds always use Google's public test app
+// ID so day-to-day development never touches the production AdMob app.
+val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+val admobProdAppIdAndroid: String = run {
     val envFile = rootProject.file("../.env")
-    if (!envFile.exists()) return@run fallback
+    if (!envFile.exists()) return@run admobTestAppId
     val props = Properties().apply { envFile.inputStream().use { load(it) } }
-    props.getProperty("ADMOB_APP_ID_ANDROID")?.trim()?.takeIf { it.isNotEmpty() } ?: fallback
+    props.getProperty("ADMOB_APP_ID_ANDROID")?.trim()?.takeIf { it.isNotEmpty() }
+        ?: admobTestAppId
 }
 
 android {
@@ -39,12 +41,17 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        // AdMob app ID for the AndroidManifest <meta-data> placeholder (TASKS 7.1).
-        manifestPlaceholders["admobAppId"] = admobAppIdAndroid
+        // Safe default for the AndroidManifest placeholder (TASKS 7.1); each
+        // build type overrides it below.
+        manifestPlaceholders["admobAppId"] = admobTestAppId
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["admobAppId"] = admobTestAppId
+        }
         release {
+            manifestPlaceholders["admobAppId"] = admobProdAppIdAndroid
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
