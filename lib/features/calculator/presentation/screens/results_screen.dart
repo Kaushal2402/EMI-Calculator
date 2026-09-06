@@ -1,8 +1,11 @@
 import 'package:emi_calculator/core/constants/app_spacing.dart';
 import 'package:emi_calculator/core/router/app_router.dart';
 import 'package:emi_calculator/features/calculator/domain/entities/emi_result.dart';
+import 'package:emi_calculator/features/calculator/domain/entities/loan_input.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/amortization_provider.dart';
 import 'package:emi_calculator/features/calculator/presentation/providers/emi_result_provider.dart';
+import 'package:emi_calculator/features/calculator/presentation/providers/loan_input_provider.dart';
+import 'package:emi_calculator/features/calculator/presentation/utils/emi_share_text.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/amortization_table.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/emi_chart.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/summary_card.dart';
@@ -12,6 +15,7 @@ import 'package:emi_calculator/shared/widgets/section_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// Results screen (SOW §5.3).
 ///
@@ -29,6 +33,9 @@ class ResultsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resultAsync = ref.watch(emiResultProvider);
+    final result = resultAsync.value;
+    final input = ref.watch(loanInputProvider).value;
+    final canShare = result != null && input != null;
 
     return AppScaffold(
       title: 'Results',
@@ -40,7 +47,9 @@ class ResultsScreen extends ConsumerWidget {
         IconButton(
           icon: const Icon(Icons.share),
           tooltip: 'Share',
-          onPressed: () {},
+          onPressed: canShare
+              ? () => _shareSummary(input: input, result: result)
+              : null,
         ),
       ],
       body: switch (resultAsync) {
@@ -50,6 +59,21 @@ class ResultsScreen extends ConsumerWidget {
       },
     );
   }
+}
+
+/// Opens the native share sheet with the SOW §4.7 plain-text summary
+/// (AC-06). The share sheet itself is platform UI; the text is built by
+/// [buildEmiShareText].
+Future<void> _shareSummary({
+  required LoanInput input,
+  required EmiResult result,
+}) {
+  return SharePlus.instance.share(
+    ShareParams(
+      text: buildEmiShareText(input: input, result: result),
+      subject: 'EMI Calculator Result',
+    ),
+  );
 }
 
 class _ResultsBody extends ConsumerWidget {

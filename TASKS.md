@@ -446,10 +446,84 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
 
 ## Phase 6 — Info Sheet, Sharing, Splash  (SOW §5.1, §5.4, §4.7 · Timeline Day 3 AM)
 
-- [ ] **6.1 `InfoBottomSheet`** — modal, drag-to-dismiss, max 60% height; formula text, how-computed, app version from `package_info`.
-- [ ] **6.2 Splash screen** — app icon, gradient Primary600→800, `LinearProgressIndicator`, 1.5 s → `/calculator`.
-- [ ] **6.3 Share feature** — icon/FAB on Results; build exact plain-text summary from SOW §4.7; open native sheet via `share_plus` (AC-06).
+- [x] **6.1 `InfoBottomSheet`** — modal, drag-to-dismiss, max 60% height; formula text, how-computed, app version from `package_info`.
+  - **DONE 2026-09-06** (branch `feat/info-share-splash`, commit `<c1>`): `/info` is now
+    a real modal bottom sheet, not a full-screen dialog. New public
+    `ModalBottomSheetPage<T>` in `app_router.dart` wraps `ModalBottomSheetRoute`
+    (`showDragHandle: true`, `enableDrag: true`, `useSafeArea: true`,
+    `constraints: maxHeight = 60% of screen height`); the `[?]` AppBar icon's
+    existing `context.push(AppRoutes.info)` now opens it. `InfoBottomSheet` rebuilt
+    as scrollable content only (no `Scaffold`/`AppBar`): the SOW §4.3 formula in a
+    tinted code block, a plain-language "how the EMI is computed" paragraph +
+    `Total Interest = EMI × n − P` / `Total Payable = P + Total Interest`, then
+    `EMI Calculator v<version>` / `by Softpital`. All spacing from `app_spacing`
+    tokens, colours from the scheme.
+  - **DECISION — app version source (interim, needs client OK):** `package_info_plus`
+    is NOT in SOW §9. Rather than block, added `core/constants/app_info.dart` with
+    `kAppVersion = '1.0.0'` (hand-synced with `pubspec.yaml` `version:`), documented
+    as interim. **PROPOSAL for client:** approve adding `package_info_plus` (same
+    precedent as `dynamic_color`) so the version is read from the platform at
+    runtime; otherwise keep the const and formalise the bump in Phase 9.3.
+  - 5 widget tests (`info_bottom_sheet_test.dart`): content present, drag-handle +
+    `enableDrag` wired, height ≤ 60% of a 900px screen with scrollable content,
+    fling-from-handle dismisses, dark mode + 1.3× text scale no-overflow.
+- [x] **6.2 Splash screen** — app icon, gradient Primary600→800, `LinearProgressIndicator`, 1.5 s → `/calculator`.
+  - **DONE 2026-09-06** (commit `<c1>`): 80dp icon (`Icons.calculate`, placeholder
+    until the Phase 9.1 launcher art), `EMI Calculator` headline
+    (`headlineMedium` = Poppins 28sp, forced `FontWeight.bold`), muted `by Softpital`
+    (`bodyMedium`, `onPrimary` @ 0.8α), 2dp `LinearProgressIndicator`. Auto-navigates
+    to `/calculator` after `SplashScreen.displayDuration` (1.5s, now a named const so
+    tests reference it). Timer cancelled on dispose.
+  - **DECISION — gradient stops.** SOW §5.1 asks for "Primary 600 → Primary 800" but
+    §6.1's palette only defines a single `primary` token (no 600/800 steps). Both
+    stops are derived from `scheme.primary`: top = `lerp(primary, white, 0.12)` (≈600),
+    bottom = `lerp(primary, black, 0.24)` (≈800). No hardcoded hex.
+  - 3 tests (`splash_screen_test.dart`): name/by-line/80dp icon/2dp bar present;
+    stays on splash at 1.4s then lands on `/calculator` by 1.6s; timer cancels on
+    early dispose (no exception). `widget_test.dart` "App boots to the splash screen"
+    still green (already overrides `sharedPreferencesProvider`).
+- [x] **6.3 Share feature** — icon/FAB on Results; build exact plain-text summary from SOW §4.7; open native sheet via `share_plus` (AC-06).
   - DoD: share text matches template byte-for-byte for Home Loan default; manual test on real iOS + Android.
+  - **DONE 2026-09-06** (commit `<c1>`): Results `AppBar` share icon (placeholder
+    `onPressed: () {}` from Phase 5) now calls
+    `SharePlus.instance.share(ShareParams(text: ..., subject: 'EMI Calculator Result'))`
+    (share_plus 12.x API — the deprecated static `Share.share` is avoided). Button is
+    disabled until both `emiResultProvider` and `loanInputProvider` have values. Text
+    built by pure `buildEmiShareText({input, result})` in
+    `features/calculator/presentation/utils/emi_share_text.dart`: header
+    `EMI Calculator Result — Softpital` (U+2014 em dash), input block (label
+    `padRight(13)`), result block (label `padRight(17)`), footer
+    `Calculated using EMI Calculator App`, blocks separated by blank lines, no
+    trailing newline. Loan-type labels `Home Loan` / `Car Loan` / `Personal Loan`;
+    rate `"<x>% p.a."`; tenure via `int.toTenureLabel()`; currency via
+    `double.toIndianCurrency()`.
+  - **DECISION — display rounding basis (SOW §4.3).** The §4.7 template's
+    `₹32,48,400` / `₹62,48,400` are only reproducible from the **rounded** EMI:
+    share text uses `roundedEmi = result.monthlyEmi.round()`, then
+    `Total Payable = roundedEmi × n`, `Total Interest = Total Payable − P`. The
+    unrounded `EmiResult` totals would give `₹62,48,368`-ish.
+  - **FLAG for client:** this makes the **share text** totals differ by ~₹30 from the
+    **SummaryCard** on the Results screen, which rounds each unrounded `EmiResult`
+    value independently (Phase 5.1). Recommend a follow-up aligning the SummaryCard
+    to the SOW §4.3 "EMI × n − P" (rounded-EMI) definition so both surfaces agree.
+    Not changed here — out of Phase 6 scope.
+  - 7 tests (`emi_share_text_test.dart`): byte-for-byte template match for the Home
+    Loan default, colon alignment, Car/Personal labels + figures, rounded-EMI totals,
+    fractional-year tenure. Plus 1 widget test in `results_screen_test.dart` that
+    mocks the `dev.fluttercommunity.plus/share` platform channel and asserts the tap
+    sends exactly `buildEmiShareText(...)`.
+  - **DEFERRED:** AC-06 final check = manual share on real iOS + Android (native sheet
+    can't run in a widget test) — Phase 8 device pass.
+
+**PHASE 6 DONE 2026-09-06** — branch `feat/info-share-splash` (not merged, not pushed).
+`flutter analyze` 0/0 · `dart format` clean · `dart run custom_lint` clean ·
+`flutter test` **198 green** (+15 vs Phase 5's 183). New tests:
+`emi_share_text_test` (7), `splash_screen_test` (3), `info_bottom_sheet_test` (5).
+New deviation from SOW §8 tree: `features/calculator/presentation/utils/` for
+`emi_share_text.dart` (standard presentation-helper location). Interim
+`core/constants/app_info.dart` for the app version — **`package_info_plus` addition
+pending client approval** (see 6.1). Unblocks **Phase 7 — AdMob** (`AdmobBannerWidget`
+on Results, interstitial-every-5th-calc).
 
 ---
 
