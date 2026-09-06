@@ -447,7 +447,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
 ## Phase 6 — Info Sheet, Sharing, Splash  (SOW §5.1, §5.4, §4.7 · Timeline Day 3 AM)
 
 - [x] **6.1 `InfoBottomSheet`** — modal, drag-to-dismiss, max 60% height; formula text, how-computed, app version from `package_info`.
-  - **DONE 2026-09-06** (branch `feat/info-share-splash`, commit `<c1>`): `/info` is now
+  - **DONE 2026-09-06** (branch `feat/info-share-splash`, commit `787470f`): `/info` is now
     a real modal bottom sheet, not a full-screen dialog. New public
     `ModalBottomSheetPage<T>` in `app_router.dart` wraps `ModalBottomSheetRoute`
     (`showDragHandle: true`, `enableDrag: true`, `useSafeArea: true`,
@@ -468,7 +468,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
     `enableDrag` wired, height ≤ 60% of a 900px screen with scrollable content,
     fling-from-handle dismisses, dark mode + 1.3× text scale no-overflow.
 - [x] **6.2 Splash screen** — app icon, gradient Primary600→800, `LinearProgressIndicator`, 1.5 s → `/calculator`.
-  - **DONE 2026-09-06** (commit `<c1>`): 80dp icon (`Icons.calculate`, placeholder
+  - **DONE 2026-09-06** (commit `787470f`): 80dp icon (`Icons.calculate`, placeholder
     until the Phase 9.1 launcher art), `EMI Calculator` headline
     (`headlineMedium` = Poppins 28sp, forced `FontWeight.bold`), muted `by Softpital`
     (`bodyMedium`, `onPrimary` @ 0.8α), 2dp `LinearProgressIndicator`. Auto-navigates
@@ -484,7 +484,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
     still green (already overrides `sharedPreferencesProvider`).
 - [x] **6.3 Share feature** — icon/FAB on Results; build exact plain-text summary from SOW §4.7; open native sheet via `share_plus` (AC-06).
   - DoD: share text matches template byte-for-byte for Home Loan default; manual test on real iOS + Android.
-  - **DONE 2026-09-06** (commit `<c1>`): Results `AppBar` share icon (placeholder
+  - **DONE 2026-09-06** (commit `787470f`): Results `AppBar` share icon (placeholder
     `onPressed: () {}` from Phase 5) now calls
     `SharePlus.instance.share(ShareParams(text: ..., subject: 'EMI Calculator Result'))`
     (share_plus 12.x API — the deprecated static `Share.share` is avoided). Button is
