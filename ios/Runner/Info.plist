@@ -51,6 +51,9 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+	<!-- Added by flutter_native_splash (TASKS 9.2); platform default, kept explicit. -->
+	<key>UIStatusBarHidden</key>
+	<false/>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<!-- Portrait-only: SOW §5 layouts are portrait; landscape / tablet layout

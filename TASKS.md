@@ -866,8 +866,39 @@ into the Phase 8 device pass.
 - Regenerated: every widget golden (palette + component theming) + preview
   goldens. `flutter analyze` 0/0, `custom_lint` clean, 252 pass / 4 skip
   (the 4 = P1-01 outline guards).
-- [ ] **9.2 Splash native config** — `flutter_native_splash` for both platforms matching in-app splash.
-- [ ] **9.3 Versioning** — set `version: 1.0.0+1`; document bump policy.
+- [x] **9.2 Splash native config** — `flutter_native_splash` for both platforms matching in-app splash.
+  - **DONE 2026-09-06** (from `feat/phase-9-release-assets`, merged into `main`):
+    `flutter_native_splash: ^2.4.8` dev dep + config block in `pubspec.yaml`.
+    Native (OS) splash = **solid brand colour + centred white mark**, handing off
+    seamlessly to the Flutter `SplashScreen` widget (SOW §5.1: gradient + wordmark
+    + progress bar) on first engine frame. `image`/`image_dark` =
+    `assets/branding/splash_logo.png`; `android_12` block mirrors it.
+    `dart run flutter_native_splash:create` wrote the Android
+    `drawable[-night][-v21]/launch_background.xml`, `values[-night][-v31]/styles.xml`,
+    all `drawable-*` splash PNGs, and iOS `LaunchScreen.storyboard` +
+    `LaunchImage`/`LaunchBackground` imagesets (light + dark).
+  - **UPDATED on merge:** `color`/`color_dark` bumped from the stale
+    `#1565C0` / `#0D47A1` to the current client palette `#0060D0` / `#0030A0`.
+    `splash_logo.png` is still the phase-9 placeholder mark — **rerun
+    `dart run flutter_native_splash:create` after dropping in a client mark**
+    so the bitmaps match the palette + the in-app splash.
+  - **NOTE — iOS `Info.plist`:** the tool's reserialisation was reverted; only
+    `UIStatusBarHidden = false` kept, in the original style. AdMob keys untouched.
+- [x] **9.3 Versioning** — set `version: 1.0.0+1`; document bump policy.
+  - **DONE 2026-09-06** (from `feat/phase-9-release-assets`): `pubspec.yaml` stays
+    at `version: 1.0.0+1`. Added `docs/VERSIONING.md` — single source of truth
+    mapping to the four native fields, semver bump rules, the "`<code>` +1 on
+    every store upload, monotonic across platforms" rule, a per-release checklist
+    and the hotfix flow.
+  - `lib/core/constants/app_info.dart` `kAppVersion` is a hand-synced mirror of
+    pubspec's `<name>` (client: no `package_info_plus`);
+    `test/core/app_version_consistency_test.dart` fails the build on drift.
+  - **Superseded by the premium-UI branch:** the phase-9 code-generated
+    placeholder icon (`assets/branding/icon_master.png`, old `#1565C0` palette)
+    and its `flutter_launcher_icons` config were **not** taken — `main` keeps the
+    client-supplied `assets/icon/app_icon.png` and its config from 9.1 above.
+    `assets/branding/` + `tool/generate_branding.py` remain in-tree only as
+    inputs for `splash_logo.png` / future regen.
 - [ ] **9.4 Android release build (D-02)** — create upload keystore, configure signing (not in VCS), `flutter build apk --release` + `--split-per-abi`, and `appbundle`.
   - DoD: `app-release.apk` installs on clean device; ProGuard/R8 rules for ads OK.
 - [ ] **9.5 iOS release build (D-03)** — set team/signing, `flutter build ipa --release`; requires Apple Developer account.

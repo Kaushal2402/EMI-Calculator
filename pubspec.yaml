@@ -65,6 +65,8 @@ dev_dependencies:
   custom_lint: ^0.8.1
   riverpod_lint: ^3.1.0
   flutter_launcher_icons: ^0.14.4
+  # TASKS 9.2 — native (OS) splash generator.
+  flutter_native_splash: ^2.4.8
 
 flutter:
   uses-material-design: true
@@ -116,3 +118,26 @@ flutter_launcher_icons:
     generate: false
   macos:
     generate: false
+
+# ---------------------------------------------------------------------------
+# TASKS 9.2 — Native (OS) splash. Solid brand colour + white mark; the Flutter
+# SplashScreen widget (SOW §5.1, gradient + wordmark + progress bar) takes over
+# once the engine is up, so the hand-off is seamless. Regenerate:
+#   dart run flutter_native_splash:create
+# Colours use the current client palette (was #1565C0 on the stale phase-9
+# branch); rerun the generator to refresh the platform splash bitmaps.
+# ---------------------------------------------------------------------------
+flutter_native_splash:
+  color: "#0060D0"
+  color_dark: "#0030A0"
+  image: "assets/branding/splash_logo.png"
+  image_dark: "assets/branding/splash_logo.png"
+  android: true
+  ios: true
+  web: false
+  fullscreen: false
+  android_12:
+    color: "#0060D0"
+    color_dark: "#0030A0"
+    image: "assets/branding/splash_logo.png"
+    image_dark: "assets/branding/splash_logo.png"
