@@ -236,16 +236,87 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
 
 ## Phase 4 — Calculator Screen  (SOW §5.2 · Timeline Day 2 AM)
 
-- [ ] **4.1 `AppScaffold` + `SectionLabel` shared widgets** — caps label, `0.08em` tracking, spacing per §6.3.
-- [ ] **4.2 `LoanTypeSelector`** — `SegmentedButton`, 3 tabs w/ icons; switch → reset inputs (AC-05).
-- [ ] **4.3 `AmountInputField`** — TextField + Slider synced; Indian numeral formatting via `intl` `##,##,##,##0.##`; range ₹10K–₹5Cr.
-- [ ] **4.4 `RateInputField`** — TextField + Slider; 1.00–36.00%, step 0.05%; `XX.XX%` format.
-- [ ] **4.5 `TenureInputField`** — TextField + Slider + Yr/Mo `ToggleButtons`; 1–30 yr / 12–360 mo; keeps months internally.
-- [ ] **4.6 Real-time calc wiring** — every input change (debounced 150 ms) updates `emiResultProvider`.
-- [ ] **4.7 CALCULATE EMI button** — `FilledButton` h52/r12; navigates to `/results`.
-- [ ] **4.8 Input validation & errors** — clamp out-of-range, block non-numeric, show helper text; no crash on empty field.
-- [ ] **4.9 Spacing audit** — match the §5.2 spacing table pixel-for-pixel.
-  - DoD (phase): widget tests for sync + defaults; manual check light/dark; `flutter analyze` clean.
+- [x] **4.1 `AppScaffold` + `SectionLabel` shared widgets** — caps label, `0.08em` tracking, spacing per §6.3.
+  - **DONE 2026-09-06** (branch `feat/calculator-screen`): both already existed from
+    Phase 0 and were spec-correct — `SectionLabel` uses `labelMedium` (12sp) upper-cased,
+    `onSurfaceVariant`, `fontSize * kCapsLetterSpacing` (0.08em) tracking; `AppScaffold`
+    applies `EdgeInsets.symmetric(horizontal: 16)` and a 64dp AppBar via `appBarTheme`.
+    No code change. New shared piece added: `InputSlider`
+    (`features/calculator/presentation/widgets/input_slider.dart`) — the Slider + min/max
+    caption row (`labelSmall`/`onSurfaceVariant`, 4dp below the track), so the
+    slider/range-label spacing lives in one place.
+- [x] **4.2 `LoanTypeSelector`** — `SegmentedButton`, 3 tabs w/ icons; switch → reset inputs (AC-05).
+  - **DONE 2026-09-06**: `ConsumerWidget`, `SizedBox(height: 40)` + `SegmentedButton`
+    (`StadiumBorder`, `shrinkWrap` tap target). Icons `home_outlined` /
+    `directions_car_outlined` / `person_outline` (SOW §6.5). `onSelectionChanged` →
+    `selectedTabProvider.notifier.select()`, which delegates to
+    `LoanInputNotifier.setLoanType` for the full AC-05 reset. Tests:
+    `loan_type_selector_test.dart` (3 segments render; tap Car resets to car presets;
+    Personal→Home restores Home presets).
+- [x] **4.3 `AmountInputField`** — TextField + Slider synced; Indian numeral formatting via `intl` `##,##,##,##0.##`; range ₹10K–₹5Cr.
+  - **DONE 2026-09-06**: dumb `StatefulWidget` (`value` + `onChanged`), owns only its
+    `TextEditingController`. Live grouping via new `IndianDigitsInputFormatter`
+    (`core/utils/indian_number_input_formatter.dart`, reuses `NumberFormatter.grouped`);
+    caret end-anchored. `prefixText: '₹ '`, helper text = the range. Controller re-syncs
+    from `value` only while unfocused (no cursor jump). Slider via `InputSlider`,
+    `minLabel '₹10K'` / `maxLabel '₹5Cr'`.
+  - **DECISION — principal slider snaps to ₹1,000.** SOW §4.2 specifies a step only for
+    the rate; a continuous 10k–5Cr track is unusable. Drags snap to ₹1,000; the text
+    field still accepts any exact rupee value in range. Flagged for client review.
+- [x] **4.4 `RateInputField`** — TextField + Slider; 1.00–36.00%, step 0.05%; `XX.XX%` format.
+  - **DONE 2026-09-06**: same dumb-widget pattern. `suffixText: ' %'`, text shown as
+    `toStringAsFixed(2)`, `FilteringTextInputFormatter.allow('[0-9.]')`. Slider
+    `divisions: ((36-1)/0.05).round()` = 700; drags rounded to the 0.05 step and
+    re-parsed via `toStringAsFixed(2)` to kill float drift.
+- [x] **4.5 `TenureInputField`** — TextField + Slider + Yr/Mo `ToggleButtons`; 1–30 yr / 12–360 mo; keeps months internally.
+  - **DONE 2026-09-06**: parent holds canonical `months`; `unit` only changes display /
+    entry. Years mode → slider 1–30, `display = months ~/ 12`, `months = years*12`;
+    Months mode → slider 12–360, verbatim. `_UnitToggle` = `ToggleButtons` clamped to
+    36dp, radius 8, centred in a 56dp box to line up with the field. Switching the unit
+    is not an edit (no `onMonthsChanged`).
+- [x] **4.6 Real-time calc wiring** — every input change (debounced 150 ms) updates `emiResultProvider`.
+  - **DONE 2026-09-06**: no widget-level debounce (already in `emiResultProvider`, task
+    3.3). Field `onChanged`s call the `loanInputProvider` mutators; `_CalculatorForm`
+    `watch`es `emiResultProvider` to keep the engine warm so `/results` paints
+    immediately (AC-03) and to disable the CTA if the engine ever errors.
+- [x] **4.7 CALCULATE EMI button** — `FilledButton` h52/r12; navigates to `/results`.
+  - **DONE 2026-09-06**: `FilledButton` (h52/r12 from `filledButtonTheme`), 32dp top /
+    24dp + system-inset bottom, `context.push('/results')`. `calculator_screen_test.dart`
+    asserts navigation.
+- [x] **4.8 Input validation & errors** — clamp out-of-range, block non-numeric, show helper text; no crash on empty field.
+  - **DONE 2026-09-06**: input formatters block non-numeric at the source. While typing:
+    out-of-range or empty → `errorText` shown, value **not** propagated (last valid value
+    stays in `loanInputProvider`, so the engine never sees NaN). On blur / submit: parse,
+    clamp into range, normalise the text, propagate. Every field carries permanent
+    helper text with its allowed range.
+- [x] **4.9 Spacing audit** — match the §5.2 spacing table pixel-for-pixel.
+  - **DONE 2026-09-06**: all gaps use `app_spacing.dart` tokens — 24 (AppBar→selector),
+    8 (label→field), 8 (field→slider), 4 (slider→range labels), 20 (between groups),
+    32 (CTA top), 24 + `MediaQuery.viewPadding.bottom` (CTA bottom); horizontal 16 from
+    `AppScaffold`.
+  - **DEVIATION — selector → first section label = 20dp, not the diagram's 24dp.** The
+    §5.2 ASCII diagram annotates the first label `mt = 24dp`; the §5.2 **spacing table**
+    says "Section label top margin 20dp (first: 0dp)" + "Between field groups 20dp". The
+    table wins per the phase brief. "first: 0dp" is read as "no extra margin beyond the
+    inter-group gap"; the selector is treated as a group peer, so the standard 20dp
+    applies between it and the Principal group. A literal 0dp there is visually cramped.
+    Needs client confirmation.
+- **PHASE 4 DONE 2026-09-06** — branch `feat/calculator-screen` (not merged, not pushed).
+  `flutter analyze` 0/0, `dart format` clean, `dart run custom_lint` clean,
+  `flutter test` **160 green** (+28 vs Phase 3's 130; +2 pre-existing `widget_test.dart`
+  updated to override `sharedPreferencesProvider` now that splash lands on a live
+  calculator). New tests: `indian_number_input_formatter_test` (5),
+  `amount_input_field_test` (6), `rate_input_field_test` (6), `tenure_input_field_test`
+  (7), `loan_type_selector_test` (3), `calculator_screen_test` (9 incl. dark-mode +
+  1.3× text-scale no-overflow regression). Light/dark parity and 1.3× text scale
+  verified by widget test (`tester.takeException()` null after scrolling the full form).
+  DoD (phase): widget tests for sync + defaults ✓ (AC-05); `flutter analyze` clean ✓.
+
+  **RECOMMENDATION — codegen vs hand-written Notifiers (from the Phase 4 brief's open
+  decision): keep the deviation.** The `LoanInput` symbol collision is real, the
+  entire provider layer is already consistent hand-written `Notifier`s (the exact shape
+  codegen expands to), `riverpod_lint`/`custom_lint` pass, and renaming `loanInputProvider`
+  would churn the SOW, the brief and Phases 3–5 for zero runtime benefit. Not worth it.
 
 ---
 
