@@ -517,7 +517,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
     can't run in a widget test) — Phase 8 device pass.
 
 **PHASE 6 DONE 2026-09-06** — branch `feat/info-share-splash`, merged to `develop`
-via `--no-ff` in `<merge>` (not pushed — `develop` stays ahead of `origin/develop`).
+via `--no-ff` in `da2092c` (not pushed — `develop` stays ahead of `origin/develop`).
 Branch deleted post-merge (Phase 1–5 pattern).
 `flutter analyze` 0/0 · `dart format` clean · `dart run custom_lint` clean ·
 `flutter test` **198 green** (+15 vs Phase 5's 183). New tests:
