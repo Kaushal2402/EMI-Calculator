@@ -1,2 +1,8 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+
+// AdMob application ID (SOW §4.8 · TASKS 7.1). Referenced by Info.plist's
+// GADApplicationIdentifier. TEST app ID by default — swap for the real
+// ADMOB_APP_ID_IOS before shipping (Phase 9.5) or inject it in CI. Xcode
+// treats "//" as a comment, so keep the "~" form (no slashes) in this value.
+ADMOB_APP_ID_IOS = ca-app-pub-3940256099942544~1458002511

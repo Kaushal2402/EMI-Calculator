@@ -1,7 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// AdMob application ID (SOW §4.8 · TASKS 7.2). Gradle can't read Dart defines,
+// so the native app ID is sourced from the project-root .env (git-ignored),
+// falling back to Google's public test app ID when .env is absent (dev / CI).
+val admobAppIdAndroid: String = run {
+    val fallback = "ca-app-pub-3940256099942544~3347511713" // Google test app ID
+    val envFile = rootProject.file("../.env")
+    if (!envFile.exists()) return@run fallback
+    val props = Properties().apply { envFile.inputStream().use { load(it) } }
+    props.getProperty("ADMOB_APP_ID_ANDROID")?.trim()?.takeIf { it.isNotEmpty() } ?: fallback
 }
 
 android {
@@ -19,10 +32,15 @@ android {
         applicationId = "com.softpitalservices.emicalculator"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Pinned to 24 (Android 7.0): SOW AC-10 minimum + google_mobile_ads 9.x
+        // requires API 23+. Was flutter.minSdkVersion (21).
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // AdMob app ID for the AndroidManifest <meta-data> placeholder (TASKS 7.1).
+        manifestPlaceholders["admobAppId"] = admobAppIdAndroid
     }
 
     buildTypes {

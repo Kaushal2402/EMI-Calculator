@@ -1,8 +1,27 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required by google_mobile_ads to fetch ads (SOW §4.8). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="EMI Calculator"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- AdMob application ID (SOW §4.8 · TASKS 7.1). Value comes from the
+             `admobAppId` manifest placeholder set in app/build.gradle.kts,
+             which reads ADMOB_APP_ID_ANDROID from the project-root .env and
+             falls back to Google's public test app ID. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}"/>
+        <!-- Defer ad SDK init to our own bootstrapAds() call so it never
+             blocks first frame (AC-02). -->
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.OPTIMIZE_INITIALIZATION"
+            android:value="true"/>
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.OPTIMIZE_AD_LOADING"
+            android:value="true"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
