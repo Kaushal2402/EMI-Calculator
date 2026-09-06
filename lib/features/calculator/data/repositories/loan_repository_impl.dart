@@ -4,8 +4,8 @@ import 'package:emi_calculator/features/calculator/domain/repositories/loan_repo
 
 /// Data-layer implementation of [LoanRepository] (SOW §7.5).
 ///
-/// PHASE 0 SCAFFOLD: wiring only. DTO ↔ entity mapping and first-launch
-/// defaults land in tasks 2.2 / 2.3.
+/// A thin adapter over [LoanLocalDataSource]. DTO ↔ entity mapping lives in the
+/// data source (see `LoanInputDto`); this class owns nothing but the wiring.
 class LoanRepositoryImpl implements LoanRepository {
   /// Creates the repository with its data source.
   const LoanRepositoryImpl(this._dataSource);
