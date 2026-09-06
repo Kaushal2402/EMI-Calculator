@@ -64,6 +64,52 @@ dev_dependencies:
   riverpod_generator: ^4.0.0
   custom_lint: ^0.8.1
   riverpod_lint: ^3.1.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
 flutter:
   uses-material-design: true
+
+# ---------------------------------------------------------------------------
+# TASKS 9.1 — App icon set (D-04). Regenerate after changing the source art:
+#   dart run tool/generate_branding.py   # rebuilds assets/branding/*
+#   dart run flutter_launcher_icons
+# Source art is generated from code (tool/generate_branding.py); palette matches
+# SOW §6.1. Master is full-bleed with no alpha (iOS requirement); Android uses a
+# separate adaptive foreground/background pair.
+# ---------------------------------------------------------------------------
+flutter_launcher_icons:
+  image_path: "assets/branding/icon_master.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 24
+  adaptive_icon_background: "assets/branding/icon_background.png"
+  adaptive_icon_foreground: "assets/branding/icon_foreground.png"
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
+
+# ---------------------------------------------------------------------------
+# TASKS 9.2 — Native (OS) splash. Solid brand colour + white mark; the Flutter
+# SplashScreen widget (SOW §5.1, gradient + wordmark + progress bar) takes over
+# once the engine is up, so the hand-off is seamless. Regenerate:
+#   dart run flutter_native_splash:create
+# ---------------------------------------------------------------------------
+flutter_native_splash:
+  color: "#1565C0"
+  color_dark: "#0D47A1"
+  image: "assets/branding/splash_logo.png"
+  image_dark: "assets/branding/splash_logo.png"
+  android: true
+  ios: true
+  web: false
+  fullscreen: false
+  android_12:
+    color: "#1565C0"
+    color_dark: "#0D47A1"
+    image: "assets/branding/splash_logo.png"
+    image_dark: "assets/branding/splash_logo.png"
