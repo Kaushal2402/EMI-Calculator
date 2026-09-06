@@ -67,13 +67,17 @@ abstract final class AppTheme {
         ),
       ),
       sliderTheme: SliderThemeData(
-        trackHeight: 6,
+        trackHeight: 4,
         activeTrackColor: scheme.primary,
-        inactiveTrackColor: scheme.primary.withValues(alpha: 0.16),
+        inactiveTrackColor: scheme.primary.withValues(alpha: 0.14),
         thumbColor: scheme.primary,
         overlayColor: scheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: scheme.primary,
         trackShape: const RoundedRectSliderTrackShape(),
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
+        // Discrete sliders (rate, tenure) otherwise render a busy dotted track.
+        tickMarkShape: SliderTickMarkShape.noTickMark,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

@@ -48,7 +48,7 @@ class MetricTile extends StatelessWidget {
           (theme.textTheme.labelSmall?.fontSize ?? 11) * kCapsLetterSpacing,
     );
     final valueBase = emphasis
-        ? theme.textTheme.headlineMedium
+        ? theme.textTheme.displaySmall
         : theme.textTheme.titleLarge;
 
     return Column(

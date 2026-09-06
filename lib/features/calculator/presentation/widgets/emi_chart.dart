@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:emi_calculator/core/constants/app_colors.dart';
 import 'package:emi_calculator/core/constants/app_spacing.dart';
 import 'package:emi_calculator/core/extensions/double_ext.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -216,13 +217,18 @@ class _LegendRow extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(4),
+            // Hairline so a light gold swatch keeps a 3:1 boundary on a light
+            // surface (WCAG 1.4.11, AC-09).
+            border: Border.all(
+              color: AppColors.swatchBorder(theme.colorScheme),
+            ),
           ),
         ),
         const SizedBox(width: kSpacingSM),
         Text(
-          // Label text stays default `onSurface` — the coloured swatch already
-          // carries the segment identity. `secondary` (#E53935) as body text on
-          // `surface` is only 4.05:1, below WCAG AA 4.5:1 (AC-09, Phase 8.3).
+          // Label text stays default `onSurface` — the coloured swatch (with
+          // its hairline) carries the segment identity; the gold `secondary`
+          // itself is too light to use as body text.
           name,
           style: theme.textTheme.bodyMedium,
         ),

@@ -95,22 +95,26 @@ final List<_Pair> _pairs = [
     minRatio: 3,
     note: 'break-even cells are bold >=14pt; large-text 3:1 applies',
   ),
-  // --- Secondary family (interest) --------------------------------------
+  // --- Secondary family (interest = gold) ------------------------------
   _Pair(
-    'chart interest legend swatch on screen bg (UI boundary)',
-    (s) => s.secondary,
+    'chart interest legend swatch BORDER on screen bg (UI boundary)',
+    // The swatch fill is brand gold `#F0D040`, which is too light to hit 3:1
+    // on a light surface on its own. Every swatch is drawn with a
+    // `AppColors.swatchBorder` (== onSurfaceVariant) hairline, and that
+    // boundary is what satisfies WCAG 1.4.11 — so the border is the pair
+    // under test, matching `_LegendRow` / `_SubTile` in the UI.
+    (s) => s.onSurfaceVariant,
     (s) => s.surface,
     minRatio: 3,
-    note: '12x12 legend swatch is a non-text graphical object',
+    note: 'gold swatch is delimited by an onSurfaceVariant hairline',
   ),
   _Pair(
-    'label on secondary (scheme role — NOT painted as text anywhere; '
-    'grep-verified. white on #E53935 is 4.23:1)',
+    'label on secondary (gold) — SummaryCard interest dot caption / any '
+    'text placed on the gold accent',
     (s) => s.onSecondary,
     (s) => s.secondary,
     minRatio: 3,
-    note:
-        'no widget draws text on bare `secondary`; kept as a role sanity check',
+    note: 'navy #203050 on gold #F0D040 ≈ 8.6:1',
   ),
   _Pair(
     'label on secondary container',
@@ -126,15 +130,11 @@ final List<_Pair> _pairs = [
   _Pair('label on error', (s) => s.onError, (s) => s.error),
 ];
 
-/// Known WCAG 1.4.11 (non-text contrast, 3:1) gaps that are NOT auto-enforced
-/// because the `outline` token is pinned verbatim by SOW §6.1 and changing it
-/// is a client decision (tracked as P1-01 in qa/bugs.md).
-///
-/// Measured this session:
-///   light  outline #C5CAD3 on surface #FAFAFA            -> 1.58:1
-///   light  outline #C5CAD3 on surfaceContainerHighest    -> 1.47:1
-///   dark   outline #3A3A3A on surface #121212            -> 1.65:1
-///   dark   outline #3A3A3A on surfaceContainerHighest    -> 1.47:1
+/// Low-contrast `outline` pairs kept `skip`-ped only as a *guard*: since the
+/// premium-UI refresh the app no longer paints a resting `outline` border
+/// (`inputDecorationTheme` enabled/`border` side is `BorderSide.none`, cards
+/// use `outlineVariant`), so P1-01 is resolved — these would only regress if a
+/// resting `outline` border were re-introduced.
 final List<_Pair> _outlinePairsPendingClientDecision = [
   _Pair(
     'text-field / card border on screen bg (UI boundary)',

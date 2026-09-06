@@ -9,6 +9,7 @@ import 'package:emi_calculator/features/calculator/presentation/widgets/admob_ba
 import 'package:emi_calculator/features/calculator/presentation/widgets/amount_input_field.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/rate_input_field.dart';
 import 'package:emi_calculator/features/calculator/presentation/widgets/tenure_input_field.dart';
+import 'package:emi_calculator/shared/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -99,7 +100,10 @@ void main() {
     expect(find.text('PRINCIPAL AMOUNT'), findsOneWidget);
     expect(find.text('ANNUAL INTEREST RATE'), findsOneWidget);
     expect(find.text('LOAN TENURE'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'CALCULATE EMI'), findsOneWidget);
+    expect(
+      find.widgetWithText(GradientButton, 'CALCULATE EMI'),
+      findsOneWidget,
+    );
     expect(find.byType(AmountInputField), findsOneWidget);
     expect(find.byType(RateInputField), findsOneWidget);
     expect(find.byType(TenureInputField), findsOneWidget);
@@ -117,7 +121,7 @@ void main() {
 
   testWidgets('CALCULATE EMI navigates to /results', (tester) async {
     await pump(tester);
-    final cta = find.widgetWithText(FilledButton, 'CALCULATE EMI');
+    final cta = find.widgetWithText(GradientButton, 'CALCULATE EMI');
     await tester.ensureVisible(cta);
     await tester.pumpAndSettle();
     await tester.tap(cta);
