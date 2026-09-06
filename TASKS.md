@@ -69,30 +69,50 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · 🔒 = blocks later tas
 
 ## Phase 1 — Domain Layer + Tests  (SOW §7.4 · Timeline Day 1 PM)
 
-- [ ] **1.1 🔒 Entities**
+- [x] **1.1 🔒 Entities**
   - `LoanInput` (freezed), `EmiResult` (freezed), `AmortizationRow` (freezed), `LoanType` + `TenureUnit` enums.
   - Run `build_runner`; commit generated files per repo policy.
   - DoD: entities compile; `==`/`copyWith` generated.
+  - **DONE 2026-09-06** (branch `feat/domain-layer`, commit `e0c4e60`): freezed 3 syntax
+    (`@freezed abstract class X with _$X`); `*.freezed.dart` committed. `analyze` 0/0.
 
-- [ ] **1.2 🔒 `CalculateEmiUseCase`**
+- [x] **1.2 🔒 `CalculateEmiUseCase`**
   - Implement EMI formula (SOW §4.3) incl. `r == 0` guard.
   - Build full month-by-month amortization schedule (principal/interest split, outstanding balance).
   - Compute totals + principal/interest ratios.
   - DoD: pure function, no Flutter imports, no side effects.
+  - **DONE 2026-09-06** (commit `caf6853`): reduce-balance formula; final instalment
+    absorbs residual float drift so balance closes at exactly 0. Purity enforced by
+    `domain_layer_purity_test.dart`. Domain values are **unrounded** (per SOW §7.4 code
+    sample); display rounding is presentation's job — noted for Phase 5.
 
-- [ ] **1.3 🔒 Reference unit tests (AC-01)**
+- [x] **1.3 🔒 Reference unit tests (AC-01)**
   - ≥20 reference cases cross-checked against a standard calculator (BankBazaar) within ±₹1.
   - Edge cases: min/max principal, 1-month tenure, 360-month tenure, 1% and 36% rate, 0-interest.
   - Schedule invariants: last balance ≈ 0, Σ principal ≈ P, Σ interest ≈ totalInterest.
   - DoD: `flutter test` green; coverage of use case ≥ 95%.
+  - **DONE 2026-09-06** (commit `caf6853`): 24 reference cases at ±₹1 (3 anchored to
+    SOW §4.7's ₹26,035 figure). `flutter test` green (74 tests). Use-case line
+    coverage **100%**.
 
-- [ ] **1.4 Yearly aggregation logic**
+- [x] **1.4 Yearly aggregation logic**
   - Derive year-by-year rows from monthly schedule; identify break-even row (cumulative principal > cumulative interest) (SOW §4.4).
   - DoD: unit test asserts break-even index for Home Loan default.
+  - **DONE 2026-09-06** (commit `5e7715a`). **DECISION 2026-09-06 (client-approved):**
+    break-even = standard amortization **crossover** — first row where the payment's
+    principal component > its interest component — NOT literal cumulative sums.
+    Rationale: SOW §4.4's "cumulative" wording is loose; under the literal reading the
+    Home Loan default never breaks even (total interest > total principal). Crossover is
+    well-defined for every positive-rate loan. Home Loan default break-even = monthly
+    index 142 (month 143) / yearly index 12 (year 13). Predicate lives in
+    `find_break_even_row_use_case.dart` `_isBreakEven`.
 
-- [ ] **1.5 Repository interface + local datasource contract**
+- [x] **1.5 Repository interface + local datasource contract**
   - `LoanRepository` interface in domain; `loan_local_datasource.dart` contract (SharedPreferences).
   - DoD: interface has no implementation leak into domain.
+  - **DONE 2026-09-06** (commit `40ba048`): `getLastInput`/`saveLastInput` +
+    `readLastInput`/`writeLastInput` contracts; serialisation deferred to task 2.1.
+    No leak — enforced by `domain_layer_purity_test.dart`.
 
 ---
 
