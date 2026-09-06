@@ -1,10 +1,11 @@
 /// Domain entity + supporting enums for a loan calculation request.
 ///
-/// PHASE 0 SCAFFOLD: this is a plain placeholder. Phase 1 (task 1.1) replaces
-/// [LoanInput] with a `freezed` data class. The enums are already final.
-///
 /// This file must never import Flutter or any plugin (Clean Architecture).
 library;
+
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'loan_input.freezed.dart';
 
 /// The three supported loan products (SOW §4.1).
 enum LoanType {
@@ -29,27 +30,21 @@ enum TenureUnit {
   months,
 }
 
-/// A single EMI calculation request.
-///
-/// Placeholder shape — see [SOW §7.4] for the target `freezed` definition.
-class LoanInput {
+/// A single EMI calculation request (SOW §7.4).
+@freezed
+abstract class LoanInput with _$LoanInput {
   /// Creates a loan input.
-  const LoanInput({
-    required this.principal,
-    required this.annualRate,
-    required this.tenureMonths,
-    required this.loanType,
-  });
+  const factory LoanInput({
+    /// Principal loan amount, in ₹.
+    required double principal,
 
-  /// Principal loan amount, in ₹.
-  final double principal;
+    /// Annual interest rate as a percentage, e.g. `8.5` for 8.50% p.a.
+    required double annualRate,
 
-  /// Annual interest rate as a percentage, e.g. `8.5` for 8.50% p.a.
-  final double annualRate;
+    /// Loan tenure, always expressed in months.
+    required int tenureMonths,
 
-  /// Loan tenure, always expressed in months.
-  final int tenureMonths;
-
-  /// Selected loan product.
-  final LoanType loanType;
+    /// Selected loan product.
+    required LoanType loanType,
+  }) = _LoanInput;
 }
