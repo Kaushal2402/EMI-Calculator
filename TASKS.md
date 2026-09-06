@@ -688,9 +688,11 @@ Unblocks **Phase 7 — AdMob** (`AdmobBannerWidget` on Results, interstitial-eve
     airplane-mode (banner + interstitial) collapse check; ATT prompt + UMP
     form flow verified on a real iOS + Android device.
 
-**PHASE 7 STATUS 2026-09-06** — 7.1–7.5 code-complete on branch
-`feat/admob-integration` (not merged, not pushed). `flutter analyze` 0/0 ·
-`dart format` clean · `flutter test` **207 green** (+9 vs Phase 6's 198).
+**PHASE 7 DONE 2026-09-06** — branch `feat/admob-integration` merged to
+`develop` via `--no-ff` in `4a42a3c` (not pushed — `develop` stays ahead of
+`origin/develop`). Branch deleted post-merge (Phase 1–6 pattern).
+`flutter analyze` 0/0 · `dart format` clean · `flutter test` **207 green**
+(+9 vs Phase 6's 198).
 `flutter build apk --debug` and `--release --dart-define-from-file=.env` both
 succeed; release binary carries only production ad IDs, debug only test IDs.
 iOS build + all on-device checks (AC-07, ATT, UMP form, airplane mode) roll
