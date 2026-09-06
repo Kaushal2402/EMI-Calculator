@@ -36,8 +36,20 @@ void main() {
   });
 
   group('LoanRepositoryImpl.getLastInput', () {
-    test('returns null when the data source has nothing stored', () async {
-      expect(await repository.getLastInput(), isNull);
+    test(
+      'seeds Home Loan defaults on a fresh install (task 2.3 DoD)',
+      () async {
+        final input = await repository.getLastInput();
+
+        expect(input.loanType, LoanType.home);
+        expect(input.principal, 3000000); // ₹30,00,000
+        expect(input.annualRate, 8.5); // 8.50% p.a.
+        expect(input.tenureMonths, 240); // 20 years
+      },
+    );
+
+    test('never returns null', () async {
+      expect(await repository.getLastInput(), isNotNull);
     });
 
     test('returns the persisted input verbatim when one exists', () async {

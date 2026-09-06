@@ -10,10 +10,11 @@ import 'package:emi_calculator/features/calculator/domain/entities/loan_input.da
 abstract interface class LoanRepository {
   /// Restores the last persisted [LoanInput].
   ///
-  /// Returns `null` on first launch (nothing stored yet). Implementations must
-  /// not throw for a missing value; other I/O failures may surface as an
-  /// exception for the caller to handle.
-  Future<LoanInput?> getLastInput();
+  /// On first launch (nothing stored yet) or if the stored value is unreadable,
+  /// the implementation seeds the Home Loan defaults (SOW §4.1) so callers
+  /// always receive a usable input and never have to special-case `null`.
+  /// Implementations must not throw for a missing value.
+  Future<LoanInput> getLastInput();
 
   /// Persists [input] as the most recent calculation, replacing any previously
   /// stored value. Called after every successful calculation (SOW §7.5).

@@ -50,6 +50,24 @@ const Map<LoanType, LoanTypeDefaults> kLoanDefaults = {
 /// The loan type selected on first launch (SOW §5.2 / task 2.3).
 const LoanType kDefaultLoanType = LoanType.home;
 
+/// Builds a [LoanInput] pre-filled with [type]'s preset defaults (SOW §4.1).
+///
+/// Single source of truth for both first-launch seeding (task 2.3) and the
+/// tab-switch reset behaviour (AC-05, Phase 3).
+LoanInput loanInputFromDefaults(LoanType type) {
+  final d = kLoanDefaults[type]!;
+  return LoanInput(
+    principal: d.principal,
+    annualRate: d.annualRate,
+    tenureMonths: d.tenureMonths,
+    loanType: type,
+  );
+}
+
+/// The [LoanInput] a fresh install opens with: Home Loan defaults
+/// (₹30,00,000 / 8.50% / 20 years) per SOW §4.1 (task 2.3).
+LoanInput firstLaunchLoanInput() => loanInputFromDefaults(kDefaultLoanType);
+
 // --- Input constraints (SOW §4.2) ---------------------------------------------
 
 /// Minimum principal: ₹10,000.
