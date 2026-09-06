@@ -601,14 +601,22 @@ Unblocks **Phase 7 — AdMob** (`AdmobBannerWidget` on Results, interstitial-eve
       deferred to the Phase 8 device pass, same as prior phases' on-device checks.
 - [x] **7.2 `.env` for ad unit IDs** (D-07) — `flutter_dotenv` or `--dart-define`; test IDs default, prod IDs gated by build flavor; `.env` git-ignored, `.env.example` committed.
   - **DONE 2026-09-06**: `lib/core/config/ad_config.dart` — `AdConfig` resolves
-    `bannerUnitId` / `interstitialUnitId` per `defaultTargetPlatform` from
-    `String.fromEnvironment('ADMOB_BANNER_ANDROID' | …)` with Google's public
-    **test** unit IDs as compile-time `defaultValue`, so `flutter run` /
-    `flutter test` need no `.env`. `usingTestUnitIds` getter for a future
-    debug-badge / log line. `.env.example` rewritten to document the
-    `--dart-define-from-file=.env` build invocation and the separate native
-    app-ID injection paths (Gradle / xcconfig). `.env` remains git-ignored
-    (`.env` + `.env.*`, `!.env.example`).
+    `bannerUnitId` / `interstitialUnitId` per `defaultTargetPlatform`.
+  - **HARD MODE GATE (client, 2026-09-06): debug → test, release → prod.**
+    `AdConfig` branches on `kReleaseMode`: any debug/profile build returns the
+    hardcoded Google **test** unit IDs and ignores `.env` entirely (even if
+    `--dart-define-from-file=.env` is passed); **release** builds return the
+    `String.fromEnvironment` values from `.env`, falling back to test IDs if the
+    flag was forgotten (`usingTestUnitIds` flags that). Same gate on the native
+    app ID: Android `build.gradle.kts` sets the manifest placeholder per build
+    type; iOS `Debug.xcconfig` = test app ID, `Release.xcconfig` = prod.
+  - `.env` git-ignored (`.env` + `.env.*`, `!.env.example`); `.env.example`
+    committed with test IDs + the consumption rules.
+  - **VERIFIED in the built binary:** `flutter build apk --release
+    --dart-define-from-file=.env` → `strings lib/*/libapp.so` contains **only**
+    `ca-app-pub-6537371585934021/6948388978` (prod banner), zero test unit IDs.
+    Debug behaviour locked by `test/core/ad_config_test.dart` (runs in
+    `kReleaseMode == false` → asserts test IDs + `usingTestUnitIds`).
 - [x] **7.3 `AdmobBannerWidget`** — 320×50 pinned above system nav on Results; reserves space, never overlaps content (AC-07).
   - **DONE 2026-09-06**: `admob_banner_widget.dart` rebuilt from the Phase 0
     no-op into a `ConsumerStatefulWidget`. Loads a `BannerAd`
